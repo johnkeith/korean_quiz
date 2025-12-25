@@ -477,6 +477,44 @@
             min-width: 45px;
             text-align: right;
         }
+
+        /* Radio buttons */
+        .radio-setting {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #eee;
+        }
+
+        .radio-setting > label {
+            display: block;
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .radio-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #003478;
+            cursor: pointer;
+        }
+
+        .radio-option span {
+            color: #1a1a1a;
+            font-size: 14px;
+        }
     </style>
 </head>
 
@@ -595,6 +633,20 @@
                                 <span class="speed-value" id="pauseValue">3s</span>
                             </div>
                         </div>
+
+                        <div class="radio-setting">
+                            <label>First Word Spoken</label>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="firstWord" value="english" checked onchange="updateFirstWord()">
+                                    <span>English</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="firstWord" value="korean" onchange="updateFirstWord()">
+                                    <span>Korean</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="section">
@@ -624,6 +676,7 @@
         let koreanSpeed = 0.8;
         let pauseDuration = 3;
         let isPaused = false;
+        let firstWord = 'english';
         let currentPage = 'home';
 
         // Navigation
@@ -705,6 +758,7 @@
             loadVoicePreferences();
             loadSpeedSetting();
             loadPauseDuration();
+            loadFirstWord();
             populateVoiceSelectors();
             handleInitialRoute();
         });
@@ -768,6 +822,20 @@
             pauseDuration = parseInt(slider.value);
             document.getElementById('pauseValue').textContent = pauseDuration + 's';
             localStorage.setItem('pauseDuration', pauseDuration.toString());
+        }
+
+        function loadFirstWord() {
+            const stored = localStorage.getItem('firstWord');
+            if (stored) {
+                firstWord = stored;
+                document.querySelector(`input[name="firstWord"][value="${firstWord}"]`).checked = true;
+            }
+        }
+
+        function updateFirstWord() {
+            const selected = document.querySelector('input[name="firstWord"]:checked');
+            firstWord = selected.value;
+            localStorage.setItem('firstWord', firstWord);
         }
 
         function togglePause() {
@@ -1039,8 +1107,11 @@
                 const word = shuffledWords[i];
                 progress.textContent = `Word ${i + 1} of ${shuffledWords.length}`;
 
-                currentWord.innerHTML = `<div class="english">${escapeHtml(word.english)}</div>`;
-                await speak(word.english, 'en-US');
+                const first = firstWord === 'english' ? { text: word.english, lang: 'en-US', class: 'english' } : { text: word.korean, lang: 'ko-KR', class: 'korean' };
+                const second = firstWord === 'english' ? { text: word.korean, lang: 'ko-KR', class: 'korean' } : { text: word.english, lang: 'en-US', class: 'english' };
+
+                currentWord.innerHTML = `<div class="${first.class}">${escapeHtml(first.text)}</div>`;
+                await speak(first.text, first.lang);
 
                 if (stopRequested) break;
 
@@ -1049,10 +1120,10 @@
                 if (stopRequested) break;
 
                 currentWord.innerHTML = `
-                    <div class="english">${escapeHtml(word.english)}</div>
-                    <div class="korean">${escapeHtml(word.korean)}</div>
+                    <div class="${first.class}">${escapeHtml(first.text)}</div>
+                    <div class="${second.class}">${escapeHtml(second.text)}</div>
                 `;
-                await speak(word.korean, 'ko-KR');
+                await speak(second.text, second.lang);
 
                 if (stopRequested) break;
 
@@ -1060,7 +1131,7 @@
 
                 if (stopRequested) break;
 
-                await speak(word.korean, 'ko-KR');
+                await speak(second.text, second.lang);
 
                 if (stopRequested) break;
 
