@@ -254,7 +254,7 @@
         #currentWord .korean {
             color: #a78bfa;
             margin-top: 16px;
-            font-size: clamp(36px, 10vw, 56px);
+            font-size: clamp(72px, 20vw, 112px);
         }
 
         #progress {
@@ -480,6 +480,7 @@
                         <div id="progress"></div>
                         <div class="controls">
                             <button id="startBtn" onclick="startQuiz()">Start Quiz</button>
+                            <button id="pauseBtn" onclick="togglePause()" class="btn-secondary" disabled>Pause</button>
                             <button id="stopBtn" onclick="stopQuiz()" class="btn-danger" disabled>Stop Quiz</button>
                         </div>
                     </div>
@@ -545,6 +546,14 @@
                                 <span class="speed-value" id="speedValue">80%</span>
                             </div>
                         </div>
+
+                        <div class="speed-setting">
+                            <label>Pause Between Words (seconds)</label>
+                            <div class="speed-row">
+                                <input type="range" id="pauseDuration" min="1" max="10" value="3" oninput="updatePauseDuration()">
+                                <span class="speed-value" id="pauseValue">3s</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="section">
@@ -572,6 +581,8 @@
             ko: null
         };
         let koreanSpeed = 0.8;
+        let pauseDuration = 3;
+        let isPaused = false;
         let currentPage = 'home';
 
         // Navigation
@@ -652,6 +663,7 @@
             displayWords();
             loadVoicePreferences();
             loadSpeedSetting();
+            loadPauseDuration();
             populateVoiceSelectors();
             handleInitialRoute();
         });
@@ -699,6 +711,34 @@
             koreanSpeed = slider.value / 100;
             document.getElementById('speedValue').textContent = slider.value + '%';
             localStorage.setItem('koreanSpeed', koreanSpeed.toString());
+        }
+
+        function loadPauseDuration() {
+            const stored = localStorage.getItem('pauseDuration');
+            if (stored) {
+                pauseDuration = parseInt(stored);
+                document.getElementById('pauseDuration').value = pauseDuration;
+                document.getElementById('pauseValue').textContent = pauseDuration + 's';
+            }
+        }
+
+        function updatePauseDuration() {
+            const slider = document.getElementById('pauseDuration');
+            pauseDuration = parseInt(slider.value);
+            document.getElementById('pauseValue').textContent = pauseDuration + 's';
+            localStorage.setItem('pauseDuration', pauseDuration.toString());
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            const pauseBtn = document.getElementById('pauseBtn');
+            if (isPaused) {
+                pauseBtn.textContent = 'Resume';
+                window.speechSynthesis.pause();
+            } else {
+                pauseBtn.textContent = 'Pause';
+                window.speechSynthesis.resume();
+            }
         }
 
         function populateVoiceSelectors() {
@@ -942,7 +982,10 @@
             stopRequested = false;
 
             document.getElementById('startBtn').disabled = true;
+            document.getElementById('pauseBtn').disabled = false;
             document.getElementById('stopBtn').disabled = false;
+            isPaused = false;
+            document.getElementById('pauseBtn').textContent = 'Pause';
 
             const currentWord = document.getElementById('currentWord');
             const progress = document.getElementById('progress');
@@ -960,7 +1003,7 @@
 
                 if (stopRequested) break;
 
-                await delay(3000);
+                await pauseDelay(pauseDuration * 1000);
 
                 if (stopRequested) break;
 
@@ -972,7 +1015,7 @@
 
                 if (stopRequested) break;
 
-                await delay(3000);
+                await pauseDelay(pauseDuration * 1000);
 
                 if (stopRequested) break;
 
@@ -981,7 +1024,7 @@
                 if (stopRequested) break;
 
                 if (i < shuffledWords.length - 1) {
-                    await delay(2000);
+                    await pauseDelay(pauseDuration * 1000);
                 }
             }
 
@@ -990,14 +1033,18 @@
 
         function stopQuiz() {
             stopRequested = true;
+            isPaused = false;
             window.speechSynthesis.cancel();
         }
 
         function endQuiz() {
             isQuizRunning = false;
             stopRequested = false;
+            isPaused = false;
 
             document.getElementById('startBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+            document.getElementById('pauseBtn').textContent = 'Pause';
             document.getElementById('stopBtn').disabled = true;
 
             document.getElementById('currentWord').innerHTML = '';
@@ -1032,6 +1079,27 @@
 
         function delay(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function pauseDelay(ms) {
+            return new Promise(resolve => {
+                const checkInterval = 100;
+                let elapsed = 0;
+                const interval = setInterval(() => {
+                    if (stopRequested) {
+                        clearInterval(interval);
+                        resolve();
+                        return;
+                    }
+                    if (!isPaused) {
+                        elapsed += checkInterval;
+                    }
+                    if (elapsed >= ms) {
+                        clearInterval(interval);
+                        resolve();
+                    }
+                }, checkInterval);
+            });
         }
     </script>
 </body>
