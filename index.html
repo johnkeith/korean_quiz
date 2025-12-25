@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>English-Korean Vocabulary Quiz</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #1a1a1a;
+            color: #fff;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* App Container */
+        .app {
+            height: 100%;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .content-wrapper {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Page transitions */
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
+            will-change: transform, opacity;
+        }
+
+        .page.hidden {
+            transform: translateX(100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .page.slide-out {
+            transform: translateX(-30%);
+            opacity: 0.5;
+        }
+
+        /* Home Page */
+        #home-page {
+            background-color: #1a1a1a;
+        }
+
+        .menu-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-item {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: filter 0.15s ease;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .menu-item:active {
+            filter: brightness(0.9);
+        }
+
+        .menu-item-content {
+            width: 100%;
+            max-width: 600px;
+            padding: 0 24px;
+        }
+
+        .menu-item h2 {
+            font-size: clamp(28px, 7vw, 42px);
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            letter-spacing: -0.5px;
+        }
+
+        /* Gradient colors like Clear app */
+        .menu-item:nth-child(1) {
+            background: linear-gradient(180deg, #ff3b30 0%, #ff6b4a 100%);
+        }
+
+        .menu-item:nth-child(2) {
+            background: linear-gradient(180deg, #ff8c42 0%, #ffa64d 100%);
+        }
+
+        .menu-item:nth-child(3) {
+            background: linear-gradient(180deg, #ffb340 0%, #ffc94d 100%);
+        }
+
+        /* Section Pages */
+        .section-page {
+            background-color: #1a1a1a;
+        }
+
+        .page-header {
+            background: linear-gradient(180deg, #ff3b30 0%, #ff6b4a 100%);
+            display: flex;
+            justify-content: center;
+        }
+
+        .page-header-content {
+            width: 100%;
+            max-width: 600px;
+            padding: 24px;
+        }
+
+        .page-header h1 {
+            font-size: clamp(24px, 6vw, 32px);
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+
+        /* Different header colors for each page - matching menu items */
+        #quiz-page .page-header {
+            background: linear-gradient(180deg, #ff3b30 0%, #ff6b4a 100%);
+        }
+
+        #words-page .page-header {
+            background: linear-gradient(180deg, #ff8c42 0%, #ffa64d 100%);
+        }
+
+        #settings-page .page-header {
+            background: linear-gradient(180deg, #ffb340 0%, #ffc94d 100%);
+        }
+
+        .page-content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            display: flex;
+            justify-content: center;
+        }
+
+        .page-content-inner {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px 24px;
+        }
+
+        /* Content Styles */
+        .section {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .section h2 {
+            color: #fff;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .section p {
+            color: #999;
+            font-size: 14px;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        input[type="file"] {
+            display: block;
+            margin: 12px 0;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        input[type="file"]::file-selector-button {
+            background: #444;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            margin-right: 12px;
+        }
+
+        button {
+            background: linear-gradient(180deg, #ff6b4a 0%, #ff5040 100%);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.15s ease, filter 0.15s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button:active {
+            transform: scale(0.98);
+            filter: brightness(0.9);
+        }
+
+        button:disabled {
+            background: #444;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .btn-danger {
+            background: linear-gradient(180deg, #ff4444 0%, #cc3333 100%);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(180deg, #555 0%, #444 100%);
+        }
+
+        #currentWord {
+            font-size: clamp(24px, 6vw, 32px);
+            font-weight: bold;
+            text-align: center;
+            padding: 30px 20px;
+            min-height: 150px;
+        }
+
+        #currentWord .english {
+            color: #fff;
+        }
+
+        #currentWord .korean {
+            color: #a78bfa;
+            margin-top: 16px;
+            font-size: clamp(36px, 10vw, 56px);
+        }
+
+        #progress {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .controls button {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        /* Voice settings */
+        .voice-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .voice-row label {
+            min-width: 70px;
+            font-weight: 500;
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .voice-row select {
+            flex: 1;
+            min-width: 150px;
+            padding: 10px 12px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #333;
+            color: #fff;
+        }
+
+        .voice-row button {
+            padding: 10px 16px;
+            font-size: 14px;
+        }
+
+        .no-voices {
+            color: #ff6b6b;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        /* Word list */
+        .word-list-container {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 12px;
+            border-radius: 8px;
+            background: #222;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+
+        th {
+            background-color: #333;
+            font-weight: 600;
+            color: #ccc;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            color: #ddd;
+            font-size: 14px;
+        }
+
+        .no-words {
+            color: #666;
+            font-style: italic;
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .btn-remove {
+            background: transparent;
+            color: #ff6b6b;
+            border: 1px solid #ff6b6b;
+            padding: 6px 12px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 6px;
+        }
+
+        .btn-remove:active {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        /* Settings specific */
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-label {
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .setting-value {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Speed slider */
+        .speed-setting {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #444;
+        }
+
+        .speed-setting label {
+            display: block;
+            color: #ccc;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .speed-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .speed-row input[type="range"] {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #444;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .speed-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #ff8c42;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .speed-value {
+            color: #fff;
+            font-size: 14px;
+            min-width: 45px;
+            text-align: right;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <!-- Home Page -->
+        <div id="home-page" class="page">
+            <div class="menu-container">
+                <div class="menu-item" onclick="navigateTo('quiz')">
+                    <div class="menu-item-content">
+                        <h2>Quiz</h2>
+                    </div>
+                </div>
+                <div class="menu-item" onclick="navigateTo('words')">
+                    <div class="menu-item-content">
+                        <h2>Words</h2>
+                    </div>
+                </div>
+                <div class="menu-item" onclick="navigateTo('settings')">
+                    <div class="menu-item-content">
+                        <h2>Settings</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Page -->
+        <div id="quiz-page" class="page section-page hidden">
+            <div class="page-header">
+                <div class="page-header-content">
+                    <h1>Quiz</h1>
+                </div>
+            </div>
+            <div class="page-content">
+                <div class="page-content-inner">
+                    <div class="section">
+                        <div id="currentWord"></div>
+                        <div id="progress"></div>
+                        <div class="controls">
+                            <button id="startBtn" onclick="startQuiz()">Start Quiz</button>
+                            <button id="stopBtn" onclick="stopQuiz()" class="btn-danger" disabled>Stop Quiz</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Words Page -->
+        <div id="words-page" class="page section-page hidden">
+            <div class="page-header">
+                <div class="page-header-content">
+                    <h1>Words</h1>
+                </div>
+            </div>
+            <div class="page-content">
+                <div class="page-content-inner">
+                    <div class="section">
+                        <h2>Upload CSV</h2>
+                        <p>Upload a CSV file with English words in column A and Korean definitions in column B.</p>
+                        <input type="file" id="csvFile" accept=".csv">
+                        <button onclick="handleUpload()">Upload</button>
+                    </div>
+
+                    <div class="section">
+                        <h2>Loaded Words (<span id="wordCount">0</span>)</h2>
+                        <button onclick="clearWords()" class="btn-secondary" style="margin-bottom: 12px;">Clear All
+                            Words</button>
+                        <div class="word-list-container">
+                            <div id="wordList"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Page -->
+        <div id="settings-page" class="page section-page hidden">
+            <div class="page-header">
+                <div class="page-header-content">
+                    <h1>Settings</h1>
+                </div>
+            </div>
+            <div class="page-content">
+                <div class="page-content-inner">
+                    <div class="section">
+                        <h2>Voice Settings</h2>
+                        <div class="voice-row">
+                            <label>English:</label>
+                            <select id="englishVoice"></select>
+                            <button onclick="testVoice('en')" class="btn-secondary">Test</button>
+                        </div>
+                        <div class="voice-row">
+                            <label>Korean:</label>
+                            <select id="koreanVoice"></select>
+                            <button onclick="testVoice('ko')" class="btn-secondary">Test</button>
+                        </div>
+                        <div id="voiceStatus"></div>
+
+                        <div class="speed-setting">
+                            <label>Korean Speech Speed</label>
+                            <div class="speed-row">
+                                <input type="range" id="koreanSpeed" min="50" max="100" value="80" oninput="updateSpeed()">
+                                <span class="speed-value" id="speedValue">80%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>About</h2>
+                        <div class="setting-item">
+                            <span class="setting-label">Version</span>
+                            <span class="setting-value">1.0.0</span>
+                        </div>
+                        <div class="setting-item">
+                            <span class="setting-label">Words Loaded</span>
+                            <span class="setting-value" id="settingsWordCount">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let words = [];
+        let isQuizRunning = false;
+        let stopRequested = false;
+        let selectedVoices = {
+            en: null,
+            ko: null
+        };
+        let koreanSpeed = 0.8;
+        let currentPage = 'home';
+
+        // Navigation
+        function navigateTo(page) {
+            const homePage = document.getElementById('home-page');
+            const targetPage = document.getElementById(page + '-page');
+
+            if (!targetPage) return;
+
+            // Update URL hash
+            history.pushState({ page: page }, '', '#' + page);
+
+            // Animate transition
+            homePage.classList.add('slide-out');
+            targetPage.classList.remove('hidden');
+
+            currentPage = page;
+
+            // Update word counts when navigating
+            if (page === 'settings') {
+                document.getElementById('settingsWordCount').textContent = words.length;
+            }
+        }
+
+        function showHomePage() {
+            const homePage = document.getElementById('home-page');
+            const pages = document.querySelectorAll('.section-page');
+
+            homePage.classList.remove('slide-out');
+            pages.forEach(page => {
+                page.classList.add('hidden');
+            });
+
+            currentPage = 'home';
+        }
+
+        // Handle browser back/forward
+        window.addEventListener('popstate', (event) => {
+            if (event.state && event.state.page) {
+                const targetPage = document.getElementById(event.state.page + '-page');
+                const homePage = document.getElementById('home-page');
+                const pages = document.querySelectorAll('.section-page');
+
+                pages.forEach(page => {
+                    if (page.id === event.state.page + '-page') {
+                        page.classList.remove('hidden');
+                    } else {
+                        page.classList.add('hidden');
+                    }
+                });
+
+                homePage.classList.add('slide-out');
+                currentPage = event.state.page;
+            } else {
+                showHomePage();
+            }
+        });
+
+        // Handle initial hash on page load
+        function handleInitialRoute() {
+            const hash = window.location.hash.slice(1);
+            if (hash && ['quiz', 'words', 'settings'].includes(hash)) {
+                const targetPage = document.getElementById(hash + '-page');
+                const homePage = document.getElementById('home-page');
+
+                if (targetPage) {
+                    history.replaceState({ page: hash }, '', '#' + hash);
+                    homePage.classList.add('slide-out');
+                    targetPage.classList.remove('hidden');
+                    currentPage = hash;
+                }
+            }
+        }
+
+        // Load words from localStorage on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromStorage();
+            displayWords();
+            loadVoicePreferences();
+            loadSpeedSetting();
+            populateVoiceSelectors();
+            handleInitialRoute();
+        });
+
+        // Voices may load asynchronously
+        if (window.speechSynthesis) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                populateVoiceSelectors();
+            };
+        }
+
+        function loadFromStorage() {
+            const stored = localStorage.getItem('vocabWords');
+            if (stored) {
+                words = JSON.parse(stored);
+            }
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('vocabWords', JSON.stringify(words));
+        }
+
+        function loadVoicePreferences() {
+            const stored = localStorage.getItem('voicePreferences');
+            if (stored) {
+                selectedVoices = JSON.parse(stored);
+            }
+        }
+
+        function saveVoicePreferences() {
+            localStorage.setItem('voicePreferences', JSON.stringify(selectedVoices));
+        }
+
+        function loadSpeedSetting() {
+            const stored = localStorage.getItem('koreanSpeed');
+            if (stored) {
+                koreanSpeed = parseFloat(stored);
+                document.getElementById('koreanSpeed').value = koreanSpeed * 100;
+                document.getElementById('speedValue').textContent = Math.round(koreanSpeed * 100) + '%';
+            }
+        }
+
+        function updateSpeed() {
+            const slider = document.getElementById('koreanSpeed');
+            koreanSpeed = slider.value / 100;
+            document.getElementById('speedValue').textContent = slider.value + '%';
+            localStorage.setItem('koreanSpeed', koreanSpeed.toString());
+        }
+
+        function populateVoiceSelectors() {
+            const voices = window.speechSynthesis.getVoices();
+            const englishSelect = document.getElementById('englishVoice');
+            const koreanSelect = document.getElementById('koreanVoice');
+            const voiceStatus = document.getElementById('voiceStatus');
+
+            // Filter voices by language
+            const englishVoices = voices.filter(v => v.lang.startsWith('en'));
+            const koreanVoices = voices.filter(v => v.lang.startsWith('ko'));
+
+            // Populate English voices
+            englishSelect.innerHTML = '';
+            if (englishVoices.length === 0) {
+                englishSelect.innerHTML = '<option value="">No English voices available</option>';
+            } else {
+                englishVoices.sort((a, b) => {
+                    const aScore = getVoiceScore(a);
+                    const bScore = getVoiceScore(b);
+                    if (bScore !== aScore) return bScore - aScore;
+                    return a.name.localeCompare(b.name);
+                });
+
+                englishVoices.forEach(voice => {
+                    const option = document.createElement('option');
+                    option.value = voice.name;
+                    option.textContent = `${voice.name} (${voice.lang})`;
+                    if (selectedVoices.en === voice.name) {
+                        option.selected = true;
+                    }
+                    englishSelect.appendChild(option);
+                });
+
+                if (!selectedVoices.en && englishVoices.length > 0) {
+                    // Prefer Samantha as default
+                    const samantha = englishVoices.find(v => v.name.includes('Samantha'));
+                    selectedVoices.en = samantha ? samantha.name : englishVoices[0].name;
+                }
+            }
+
+            // Populate Korean voices
+            koreanSelect.innerHTML = '';
+            if (koreanVoices.length === 0) {
+                koreanSelect.innerHTML = '<option value="">No Korean voices available</option>';
+                voiceStatus.innerHTML = '<p class="no-voices">No Korean voices found. Check System Settings > Accessibility > Spoken Content to add Korean voices.</p>';
+            } else {
+                voiceStatus.innerHTML = '';
+
+                koreanVoices.sort((a, b) => {
+                    const aScore = getVoiceScore(a);
+                    const bScore = getVoiceScore(b);
+                    if (bScore !== aScore) return bScore - aScore;
+                    return a.name.localeCompare(b.name);
+                });
+
+                koreanVoices.forEach(voice => {
+                    const option = document.createElement('option');
+                    option.value = voice.name;
+                    option.textContent = `${voice.name} (${voice.lang})`;
+                    if (selectedVoices.ko === voice.name) {
+                        option.selected = true;
+                    }
+                    koreanSelect.appendChild(option);
+                });
+
+                if (!selectedVoices.ko && koreanVoices.length > 0) {
+                    selectedVoices.ko = koreanVoices[0].name;
+                }
+            }
+
+            englishSelect.onchange = () => {
+                selectedVoices.en = englishSelect.value;
+                saveVoicePreferences();
+            };
+
+            koreanSelect.onchange = () => {
+                selectedVoices.ko = koreanSelect.value;
+                saveVoicePreferences();
+            };
+        }
+
+        function getVoiceScore(voice) {
+            let score = 0;
+            const nameLower = voice.name.toLowerCase();
+            const premiumIndicators = ['premium', 'enhanced', 'natural', 'neural'];
+            const preferredNames = ['Yuna', 'Sora', 'Samantha', 'Alex', 'Daniel', 'Karen', 'Google', 'Microsoft'];
+
+            if (premiumIndicators.some(ind => nameLower.includes(ind))) score += 100;
+            if (preferredNames.some(pref => voice.name.includes(pref))) score += 50;
+            if (voice.localService) score += 20;
+
+            return score;
+        }
+
+        function testVoice(lang) {
+            const testText = lang === 'en' ? 'Hello, this is a test.' : '안녕하세요, 테스트입니다.';
+            const fullLang = lang === 'en' ? 'en-US' : 'ko-KR';
+
+            window.speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(testText);
+            utterance.lang = fullLang;
+
+            const voiceName = lang === 'en' ? selectedVoices.en : selectedVoices.ko;
+            if (voiceName) {
+                const voices = window.speechSynthesis.getVoices();
+                const voice = voices.find(v => v.name === voiceName);
+                if (voice) {
+                    utterance.voice = voice;
+                }
+            }
+
+            utterance.rate = lang === 'ko' ? koreanSpeed : 0.9;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function handleUpload() {
+            const fileInput = document.getElementById('csvFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a CSV file first.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const text = e.target.result;
+                parseCSV(text);
+            };
+            reader.readAsText(file);
+        }
+
+        function parseCSV(text) {
+            const lines = text.split(/\r?\n/);
+            words = [];
+
+            for (const line of lines) {
+                if (!line.trim()) continue;
+
+                const parts = parseCSVLine(line);
+
+                if (parts.length >= 2) {
+                    const english = parts[0].trim();
+                    const korean = parts[1].trim();
+
+                    if (english && korean) {
+                        words.push({ english, korean });
+                    }
+                }
+            }
+
+            saveToStorage();
+            displayWords();
+            document.getElementById('csvFile').value = '';
+
+            if (words.length > 0) {
+                alert(`Successfully loaded ${words.length} word pairs!`);
+            } else {
+                alert('No valid word pairs found in the CSV.');
+            }
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current);
+
+            return result.map(s => s.replace(/^"|"$/g, ''));
+        }
+
+        function displayWords() {
+            const wordList = document.getElementById('wordList');
+            const wordCount = document.getElementById('wordCount');
+
+            wordCount.textContent = words.length;
+
+            if (words.length === 0) {
+                wordList.innerHTML = '<p class="no-words">No words loaded. Upload a CSV to get started.</p>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>#</th><th>English</th><th>Korean</th><th></th></tr></thead><tbody>';
+            words.forEach((word, index) => {
+                html += `<tr>
+                    <td>${index + 1}</td>
+                    <td>${escapeHtml(word.english)}</td>
+                    <td>${escapeHtml(word.korean)}</td>
+                    <td><button onclick="removeWord(${index})" class="btn-remove" title="Remove">&times;</button></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+
+            wordList.innerHTML = html;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function clearWords() {
+            if (confirm('Are you sure you want to clear all words?')) {
+                words = [];
+                saveToStorage();
+                displayWords();
+            }
+        }
+
+        function removeWord(index) {
+            words.splice(index, 1);
+            saveToStorage();
+            displayWords();
+        }
+
+        async function startQuiz() {
+            if (words.length === 0) {
+                alert('No words loaded. Please upload a CSV first.');
+                return;
+            }
+
+            if (isQuizRunning) return;
+
+            isQuizRunning = true;
+            stopRequested = false;
+
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+
+            const currentWord = document.getElementById('currentWord');
+            const progress = document.getElementById('progress');
+
+            const shuffledWords = [...words].sort(() => Math.random() - 0.5);
+
+            for (let i = 0; i < shuffledWords.length; i++) {
+                if (stopRequested) break;
+
+                const word = shuffledWords[i];
+                progress.textContent = `Word ${i + 1} of ${shuffledWords.length}`;
+
+                currentWord.innerHTML = `<div class="english">${escapeHtml(word.english)}</div>`;
+                await speak(word.english, 'en-US');
+
+                if (stopRequested) break;
+
+                await delay(3000);
+
+                if (stopRequested) break;
+
+                currentWord.innerHTML = `
+                    <div class="english">${escapeHtml(word.english)}</div>
+                    <div class="korean">${escapeHtml(word.korean)}</div>
+                `;
+                await speak(word.korean, 'ko-KR');
+
+                if (stopRequested) break;
+
+                await delay(3000);
+
+                if (stopRequested) break;
+
+                await speak(word.korean, 'ko-KR');
+
+                if (stopRequested) break;
+
+                if (i < shuffledWords.length - 1) {
+                    await delay(2000);
+                }
+            }
+
+            endQuiz();
+        }
+
+        function stopQuiz() {
+            stopRequested = true;
+            window.speechSynthesis.cancel();
+        }
+
+        function endQuiz() {
+            isQuizRunning = false;
+            stopRequested = false;
+
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+
+            document.getElementById('currentWord').innerHTML = '';
+            document.getElementById('progress').textContent = '';
+        }
+
+        function speak(text, lang) {
+            return new Promise((resolve) => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = lang;
+
+                const langCode = lang.split('-')[0];
+                const voiceName = langCode === 'en' ? selectedVoices.en : selectedVoices.ko;
+
+                if (voiceName) {
+                    const voices = window.speechSynthesis.getVoices();
+                    const voice = voices.find(v => v.name === voiceName);
+                    if (voice) {
+                        utterance.voice = voice;
+                    }
+                }
+
+                utterance.rate = langCode === 'ko' ? koreanSpeed : 0.9;
+                utterance.pitch = 1.0;
+
+                utterance.onend = resolve;
+                utterance.onerror = resolve;
+
+                window.speechSynthesis.speak(utterance);
+            });
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+
+</html>
