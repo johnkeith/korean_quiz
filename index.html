@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>English-Korean Vocabulary Quiz</title>
+    <title>Korean Quiz App</title>
     <style>
         * {
             box-sizing: border-box;
@@ -20,8 +20,8 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #1a1a1a;
-            color: #fff;
+            background-color: #f5f5f5;
+            color: #1a1a1a;
             -webkit-font-smoothing: antialiased;
         }
 
@@ -65,7 +65,21 @@
 
         /* Home Page */
         #home-page {
-            background-color: #1a1a1a;
+            background-color: #f5f5f5;
+        }
+
+        .app-title {
+            padding: 24px;
+            text-align: center;
+            background-color: #fff;
+            border-bottom: 1px solid #eee;
+        }
+
+        .app-title h1 {
+            font-size: clamp(24px, 5vw, 32px);
+            font-weight: 700;
+            color: #1a1a1a;
+            letter-spacing: -0.5px;
         }
 
         .menu-container {
@@ -103,26 +117,26 @@
             letter-spacing: -0.5px;
         }
 
-        /* Gradient colors like Clear app */
+        /* Korean flag colors */
         .menu-item:nth-child(1) {
-            background: linear-gradient(180deg, #ff3b30 0%, #ff6b4a 100%);
+            background: linear-gradient(180deg, #C60C30 0%, #e01e3c 100%);
         }
 
         .menu-item:nth-child(2) {
-            background: linear-gradient(180deg, #ff8c42 0%, #ffa64d 100%);
+            background: linear-gradient(180deg, #003478 0%, #0a4a9c 100%);
         }
 
         .menu-item:nth-child(3) {
-            background: linear-gradient(180deg, #ffb340 0%, #ffc94d 100%);
+            background: linear-gradient(180deg, #1a1a1a 0%, #333333 100%);
         }
 
         /* Section Pages */
         .section-page {
-            background-color: #1a1a1a;
+            background-color: #f5f5f5;
         }
 
         .page-header {
-            background: linear-gradient(180deg, #ff3b30 0%, #ff6b4a 100%);
+            background: linear-gradient(180deg, #C60C30 0%, #e01e3c 100%);
             display: flex;
             justify-content: center;
         }
@@ -142,15 +156,15 @@
 
         /* Different header colors for each page - matching menu items */
         #quiz-page .page-header {
-            background: linear-gradient(180deg, #ff3b30 0%, #ff6b4a 100%);
+            background: linear-gradient(180deg, #C60C30 0%, #e01e3c 100%);
         }
 
         #words-page .page-header {
-            background: linear-gradient(180deg, #ff8c42 0%, #ffa64d 100%);
+            background: linear-gradient(180deg, #003478 0%, #0a4a9c 100%);
         }
 
         #settings-page .page-header {
-            background: linear-gradient(180deg, #ffb340 0%, #ffc94d 100%);
+            background: linear-gradient(180deg, #1a1a1a 0%, #333333 100%);
         }
 
         .page-content {
@@ -169,21 +183,22 @@
 
         /* Content Styles */
         .section {
-            background: #2a2a2a;
+            background: #ffffff;
             padding: 20px;
             border-radius: 12px;
             margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
         .section h2 {
-            color: #fff;
+            color: #1a1a1a;
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 12px;
         }
 
         .section p {
-            color: #999;
+            color: #666;
             font-size: 14px;
             margin-bottom: 12px;
             line-height: 1.5;
@@ -192,12 +207,12 @@
         input[type="file"] {
             display: block;
             margin: 12px 0;
-            color: #fff;
+            color: #1a1a1a;
             font-size: 14px;
         }
 
         input[type="file"]::file-selector-button {
-            background: #444;
+            background: #003478;
             border: none;
             padding: 10px 16px;
             border-radius: 8px;
@@ -208,7 +223,7 @@
         }
 
         button {
-            background: linear-gradient(180deg, #ff6b4a 0%, #ff5040 100%);
+            background: linear-gradient(180deg, #C60C30 0%, #a00a28 100%);
             color: white;
             border: none;
             padding: 14px 24px;
@@ -226,17 +241,38 @@
         }
 
         button:disabled {
-            background: #444;
-            color: #666;
+            background: #ccc;
+            color: #888;
             cursor: not-allowed;
         }
 
         .btn-danger {
-            background: linear-gradient(180deg, #ff4444 0%, #cc3333 100%);
+            background: linear-gradient(180deg, #C60C30 0%, #a00a28 100%);
         }
 
         .btn-secondary {
-            background: linear-gradient(180deg, #555 0%, #444 100%);
+            background: linear-gradient(180deg, #003478 0%, #002855 100%);
+        }
+
+        .btn-upload {
+            width: 50%;
+        }
+
+        .btn-clear {
+            background: #C60C30;
+            padding: 4px 10px;
+            font-size: 12px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .section-header h2 {
+            margin-bottom: 0;
         }
 
         #currentWord {
@@ -248,11 +284,11 @@
         }
 
         #currentWord .english {
-            color: #fff;
+            color: #1a1a1a;
         }
 
         #currentWord .korean {
-            color: #a78bfa;
+            color: #1a1a1a;
             margin-top: 16px;
             font-size: clamp(72px, 20vw, 112px);
         }
@@ -288,7 +324,7 @@
         .voice-row label {
             min-width: 70px;
             font-weight: 500;
-            color: #ccc;
+            color: #333;
             font-size: 14px;
         }
 
@@ -296,11 +332,11 @@
             flex: 1;
             min-width: 150px;
             padding: 10px 12px;
-            border: 1px solid #444;
+            border: 1px solid #ddd;
             border-radius: 8px;
             font-size: 14px;
-            background: #333;
-            color: #fff;
+            background: #fff;
+            color: #1a1a1a;
         }
 
         .voice-row button {
@@ -309,7 +345,7 @@
         }
 
         .no-voices {
-            color: #ff6b6b;
+            color: #C60C30;
             font-size: 14px;
             margin-top: 8px;
         }
@@ -320,7 +356,8 @@
             overflow-y: auto;
             margin-top: 12px;
             border-radius: 8px;
-            background: #222;
+            background: #f9f9f9;
+            border: 1px solid #eee;
         }
 
         table {
@@ -332,13 +369,13 @@
         td {
             padding: 12px;
             text-align: left;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid #eee;
         }
 
         th {
-            background-color: #333;
+            background-color: #003478;
             font-weight: 600;
-            color: #ccc;
+            color: #fff;
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -347,12 +384,12 @@
         }
 
         td {
-            color: #ddd;
+            color: #333;
             font-size: 14px;
         }
 
         .no-words {
-            color: #666;
+            color: #888;
             font-style: italic;
             text-align: center;
             padding: 30px 20px;
@@ -360,8 +397,8 @@
 
         .btn-remove {
             background: transparent;
-            color: #ff6b6b;
-            border: 1px solid #ff6b6b;
+            color: #C60C30;
+            border: 1px solid #C60C30;
             padding: 6px 12px;
             font-size: 14px;
             font-weight: bold;
@@ -369,7 +406,7 @@
         }
 
         .btn-remove:active {
-            background: #ff6b6b;
+            background: #C60C30;
             color: white;
         }
 
@@ -379,7 +416,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 16px 0;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid #eee;
         }
 
         .setting-item:last-child {
@@ -387,7 +424,7 @@
         }
 
         .setting-label {
-            color: #fff;
+            color: #1a1a1a;
             font-size: 16px;
         }
 
@@ -400,12 +437,12 @@
         .speed-setting {
             margin-top: 16px;
             padding-top: 16px;
-            border-top: 1px solid #444;
+            border-top: 1px solid #eee;
         }
 
         .speed-setting label {
             display: block;
-            color: #ccc;
+            color: #333;
             font-size: 14px;
             margin-bottom: 8px;
         }
@@ -420,7 +457,7 @@
             flex: 1;
             height: 6px;
             -webkit-appearance: none;
-            background: #444;
+            background: #ddd;
             border-radius: 3px;
             outline: none;
         }
@@ -429,13 +466,13 @@
             -webkit-appearance: none;
             width: 20px;
             height: 20px;
-            background: #ff8c42;
+            background: #003478;
             border-radius: 50%;
             cursor: pointer;
         }
 
         .speed-value {
-            color: #fff;
+            color: #1a1a1a;
             font-size: 14px;
             min-width: 45px;
             text-align: right;
@@ -447,6 +484,9 @@
     <div class="app">
         <!-- Home Page -->
         <div id="home-page" class="page">
+            <div class="app-title">
+                <h1>Korean Quiz App</h1>
+            </div>
             <div class="menu-container">
                 <div class="menu-item" onclick="navigateTo('quiz')">
                     <div class="menu-item-content">
@@ -501,13 +541,14 @@
                         <h2>Upload CSV</h2>
                         <p>Upload a CSV file with English words in column A and Korean definitions in column B.</p>
                         <input type="file" id="csvFile" accept=".csv">
-                        <button onclick="handleUpload()">Upload</button>
+                        <button onclick="handleUpload()" class="btn-upload">Upload</button>
                     </div>
 
                     <div class="section">
-                        <h2>Loaded Words (<span id="wordCount">0</span>)</h2>
-                        <button onclick="clearWords()" class="btn-secondary" style="margin-bottom: 12px;">Clear All
-                            Words</button>
+                        <div class="section-header">
+                            <h2>Loaded Words (<span id="wordCount">0</span>)</h2>
+                            <button onclick="clearWords()" class="btn-clear">Clear All</button>
+                        </div>
                         <div class="word-list-container">
                             <div id="wordList"></div>
                         </div>
