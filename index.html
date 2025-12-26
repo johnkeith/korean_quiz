@@ -7,7 +7,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Korean Quiz">
-    <meta name="theme-color" content="#FFFFFF" id="themeColor">
     <link rel="apple-touch-icon" href="icon-180.png">
     <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
     <title>Korean Quiz App</title>
@@ -157,6 +156,22 @@
             padding-top: calc(24px + env(safe-area-inset-top));
             padding-left: max(24px, env(safe-area-inset-left));
             padding-right: max(24px, env(safe-area-inset-right));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-link {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .back-link:active {
+            opacity: 0.7;
         }
 
         .page-header h1 {
@@ -498,7 +513,7 @@
             border-top: 1px solid #eee;
         }
 
-        .radio-setting > label {
+        .radio-setting>label {
             display: block;
             color: #333;
             font-size: 14px;
@@ -684,6 +699,7 @@
             <div class="page-header">
                 <div class="page-header-content">
                     <h1>Quiz</h1>
+                    <span class="back-link" onclick="showHomePage()">Back</span>
                 </div>
             </div>
             <div class="page-content">
@@ -702,7 +718,8 @@
                 <h3>Word Recall</h3>
                 <div class="response-buttons">
                     <button id="btnYes" class="btn-yes" onclick="recordResponse('good')" disabled>Yes!</button>
-                    <button id="btnMaybe" class="btn-maybe" onclick="recordResponse('neutral')" disabled>Maybe...</button>
+                    <button id="btnMaybe" class="btn-maybe" onclick="recordResponse('neutral')"
+                        disabled>Maybe...</button>
                     <button id="btnNo" class="btn-no" onclick="recordResponse('poor')" disabled>No.</button>
                 </div>
             </div>
@@ -713,6 +730,7 @@
             <div class="page-header">
                 <div class="page-header-content">
                     <h1>Words</h1>
+                    <span class="back-link" onclick="showHomePage()">Back</span>
                 </div>
             </div>
             <div class="page-content">
@@ -742,6 +760,7 @@
             <div class="page-header">
                 <div class="page-header-content">
                     <h1>Settings</h1>
+                    <span class="back-link" onclick="showHomePage()">Back</span>
                 </div>
             </div>
             <div class="page-content">
@@ -763,7 +782,8 @@
                         <div class="speed-setting">
                             <label>Korean Speech Speed</label>
                             <div class="speed-row">
-                                <input type="range" id="koreanSpeed" min="50" max="100" value="80" oninput="updateSpeed()">
+                                <input type="range" id="koreanSpeed" min="50" max="100" value="80"
+                                    oninput="updateSpeed()">
                                 <span class="speed-value" id="speedValue">80%</span>
                             </div>
                         </div>
@@ -771,7 +791,8 @@
                         <div class="speed-setting">
                             <label>Pause Between Words (seconds)</label>
                             <div class="speed-row">
-                                <input type="range" id="pauseDuration" min="1" max="10" value="3" oninput="updatePauseDuration()">
+                                <input type="range" id="pauseDuration" min="1" max="10" value="3"
+                                    oninput="updatePauseDuration()">
                                 <span class="speed-value" id="pauseValue">3s</span>
                             </div>
                         </div>
@@ -780,7 +801,8 @@
                             <label>First Word Spoken</label>
                             <div class="radio-group">
                                 <label class="radio-option">
-                                    <input type="radio" name="firstWord" value="english" checked onchange="updateFirstWord()">
+                                    <input type="radio" name="firstWord" value="english" checked
+                                        onchange="updateFirstWord()">
                                     <span>English</span>
                                 </label>
                                 <label class="radio-option">
@@ -795,7 +817,7 @@
                         <h2>About</h2>
                         <div class="setting-item">
                             <span class="setting-label">Version</span>
-                            <span class="setting-value">1.1.0</span>
+                            <span class="setting-value">1.1.1</span>
                         </div>
                         <div class="setting-item">
                             <span class="setting-label">Words Loaded</span>
@@ -839,8 +861,9 @@
         };
 
         function updateThemeColor(page) {
-            const themeColor = document.getElementById('themeColor');
-            themeColor.setAttribute('content', pageThemeColors[page] || '#FFFFFF');
+            // const themeColor = document.getElementById('themeColor');
+            // themeColor.setAttribute('content', pageThemeColors[page] || '#FFFFFF');
+            document.body.style.backgroundColor = pageThemeColors[page] || '#FFFFFF';
         }
 
         // Navigation
