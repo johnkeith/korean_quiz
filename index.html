@@ -852,19 +852,6 @@
         let sortColumn = null; // 'english', 'korean', 'rating'
         let sortDirection = 'asc'; // 'asc' or 'desc'
 
-        // Theme colors for each page
-        const pageThemeColors = {
-            home: '#FFFFFF',
-            quiz: '#C60C30',
-            words: '#003478',
-            settings: '#1a1a1a'
-        };
-
-        function updateThemeColor(page) {
-            // const themeColor = document.getElementById('themeColor');
-            // themeColor.setAttribute('content', pageThemeColors[page] || '#FFFFFF');
-            document.body.style.backgroundColor = pageThemeColors[page] || '#FFFFFF';
-        }
 
         // Navigation
         function navigateTo(page) {
@@ -881,7 +868,6 @@
             targetPage.classList.remove('hidden');
 
             currentPage = page;
-            updateThemeColor(page);
 
             // Update word counts when navigating
             if (page === 'settings') {
@@ -899,7 +885,6 @@
             });
 
             currentPage = 'home';
-            updateThemeColor('home');
         }
 
         // Handle browser back/forward
@@ -924,7 +909,6 @@
 
                 homePage.classList.add('slide-out');
                 currentPage = event.state.page;
-                updateThemeColor(event.state.page);
             } else {
                 showHomePage();
             }
@@ -942,7 +926,6 @@
                     homePage.classList.add('slide-out');
                     targetPage.classList.remove('hidden');
                     currentPage = hash;
-                    updateThemeColor(hash);
                 }
             }
         }
