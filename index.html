@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Korean Quiz">
@@ -76,6 +76,9 @@
 
         .app-title {
             padding: 24px;
+            padding-top: calc(24px + env(safe-area-inset-top));
+            padding-left: max(24px, env(safe-area-inset-left));
+            padding-right: max(24px, env(safe-area-inset-right));
             text-align: center;
             background-color: #fff;
             border-bottom: 1px solid #eee;
@@ -151,6 +154,9 @@
             width: 100%;
             max-width: 600px;
             padding: 24px;
+            padding-top: calc(24px + env(safe-area-inset-top));
+            padding-left: max(24px, env(safe-area-inset-left));
+            padding-right: max(24px, env(safe-area-inset-right));
         }
 
         .page-header h1 {
