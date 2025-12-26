@@ -825,12 +825,18 @@
                         <h2>About</h2>
                         <div class="setting-item">
                             <span class="setting-label">Version</span>
-                            <span class="setting-value">1.1.8</span>
+                            <span class="setting-value">1.2.2</span>
                         </div>
                         <div class="setting-item">
                             <span class="setting-label">Words Loaded</span>
                             <span class="setting-value" id="settingsWordCount">0</span>
                         </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>Reset</h2>
+                        <p>Clear all words, ratings, and settings to start fresh.</p>
+                        <button onclick="clearAllData()" class="btn-danger" style="width: 100%; margin-top: 12px;">Clear All Data</button>
                     </div>
                 </div>
             </div>
@@ -963,6 +969,45 @@
             const stored = localStorage.getItem('vocabWords');
             if (stored) {
                 words = JSON.parse(stored);
+                // Migrate: Add IDs to words that don't have them
+                let needsSave = false;
+                const oldKnowledge = JSON.parse(localStorage.getItem('wordKnowledge') || '{}');
+                const oldShownWords = new Set(JSON.parse(localStorage.getItem('shownWords') || '[]'));
+                let knowledgeNeedsMigration = false;
+                let shownNeedsMigration = false;
+
+                words.forEach(word => {
+                    if (!word.id) {
+                        word.id = generateWordId();
+                        needsSave = true;
+
+                        const oldKey = `${word.english}|${word.korean}`;
+
+                        // Migrate word knowledge from old key format to new ID
+                        if (oldKnowledge[oldKey] && !oldKnowledge[word.id]) {
+                            oldKnowledge[word.id] = oldKnowledge[oldKey];
+                            delete oldKnowledge[oldKey];
+                            knowledgeNeedsMigration = true;
+                        }
+
+                        // Migrate shown words from old key format to new ID
+                        if (oldShownWords.has(oldKey)) {
+                            oldShownWords.delete(oldKey);
+                            oldShownWords.add(word.id);
+                            shownNeedsMigration = true;
+                        }
+                    }
+                });
+
+                if (needsSave) {
+                    saveToStorage();
+                }
+                if (knowledgeNeedsMigration) {
+                    localStorage.setItem('wordKnowledge', JSON.stringify(oldKnowledge));
+                }
+                if (shownNeedsMigration) {
+                    localStorage.setItem('shownWords', JSON.stringify([...oldShownWords]));
+                }
             }
         }
 
@@ -1027,8 +1072,12 @@
             localStorage.setItem('firstWord', firstWord);
         }
 
+        function generateWordId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+        }
+
         function getWordKey(word) {
-            return `${word.english}|${word.korean}`;
+            return word.id || `${word.english}|${word.korean}`;
         }
 
         function loadWordKnowledge() {
@@ -1251,7 +1300,15 @@
 
         function parseCSV(text) {
             const lines = text.split(/\r?\n/);
-            words = [];
+
+            // Build a map of existing words by Korean definition
+            const existingByKorean = new Map();
+            words.forEach(word => {
+                existingByKorean.set(word.korean, word);
+            });
+
+            let newCount = 0;
+            let updatedCount = 0;
 
             for (const line of lines) {
                 if (!line.trim()) continue;
@@ -1263,17 +1320,41 @@
                     const korean = parts[1].trim();
 
                     if (english && korean) {
-                        words.push({ english, korean });
+                        if (existingByKorean.has(korean)) {
+                            // Update existing word's English if different
+                            const existing = existingByKorean.get(korean);
+                            if (existing.english !== english) {
+                                existing.english = english;
+                                updatedCount++;
+                            }
+                        } else {
+                            // Add new word with unique ID
+                            const newWord = {
+                                id: generateWordId(),
+                                english,
+                                korean
+                            };
+                            existingByKorean.set(korean, newWord);
+                            newCount++;
+                        }
                     }
                 }
             }
+
+            // Convert map back to array
+            words = Array.from(existingByKorean.values());
 
             saveToStorage();
             displayWords();
             document.getElementById('csvFile').value = '';
 
-            if (words.length > 0) {
-                alert(`Successfully loaded ${words.length} word pairs!`);
+            if (newCount > 0 || updatedCount > 0) {
+                let message = [];
+                if (newCount > 0) message.push(`${newCount} new word(s) added`);
+                if (updatedCount > 0) message.push(`${updatedCount} word(s) updated`);
+                alert(message.join(', ') + `. Total: ${words.length} words.`);
+            } else if (words.length > 0) {
+                alert(`No new words to add. Total: ${words.length} words.`);
             } else {
                 alert('No valid word pairs found in the CSV.');
             }
@@ -1397,6 +1478,40 @@
             }
         }
 
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear ALL data? This will remove all words, ratings, and settings. This cannot be undone.')) {
+                // Clear all app data from localStorage
+                localStorage.removeItem('vocabWords');
+                localStorage.removeItem('wordKnowledge');
+                localStorage.removeItem('shownWords');
+                localStorage.removeItem('voicePreferences');
+                localStorage.removeItem('koreanSpeed');
+                localStorage.removeItem('pauseDuration');
+                localStorage.removeItem('firstWord');
+
+                // Reset in-memory state
+                words = [];
+                wordKnowledge = {};
+                shownWords = new Set();
+                selectedVoices = { en: null, ko: null };
+                koreanSpeed = 0.8;
+                pauseDuration = 3;
+                firstWord = 'english';
+
+                // Update UI
+                displayWords();
+                document.getElementById('koreanSpeed').value = 80;
+                document.getElementById('speedValue').textContent = '80%';
+                document.getElementById('pauseDuration').value = 3;
+                document.getElementById('pauseValue').textContent = '3s';
+                document.querySelector('input[name="firstWord"][value="english"]').checked = true;
+                document.getElementById('settingsWordCount').textContent = '0';
+                populateVoiceSelectors();
+
+                alert('All data has been cleared.');
+            }
+        }
+
         function removeWord(index) {
             words.splice(index, 1);
             saveToStorage();
@@ -1507,7 +1622,9 @@
 
                 if (stopRequested) break;
 
-                await speak(second.text, second.lang);
+                // Repeat the Korean word (first word if Korean first, second word if English first)
+                const repeatWord = firstWord === 'korean' ? first : second;
+                await speak(repeatWord.text, repeatWord.lang);
 
                 if (stopRequested) break;
 
