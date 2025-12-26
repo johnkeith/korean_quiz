@@ -307,16 +307,16 @@
             margin-bottom: 16px;
         }
 
-        .controls {
+        .quiz-controls-top {
             display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
             gap: 12px;
+            margin-bottom: 16px;
         }
 
-        .controls button {
+        .quiz-controls-top button {
             flex: 1;
-            min-width: 120px;
+            padding: 16px 24px;
+            font-size: 18px;
         }
 
         /* Voice settings */
@@ -554,7 +554,8 @@
 
         @media (max-width: 500px) {
             .response-buttons {
-                flex-direction: column-reverse;
+                flex-direction: column;
+                gap: 16px;
             }
         }
 
@@ -681,14 +682,13 @@
             </div>
             <div class="page-content">
                 <div class="page-content-inner">
+                    <div class="quiz-controls-top">
+                        <button id="startPauseBtn" onclick="toggleStartPause()">Start Quiz</button>
+                        <button id="stopBtn" onclick="stopQuiz()" class="btn-danger" disabled>Stop</button>
+                    </div>
                     <div class="section">
                         <div id="currentWord"></div>
                         <div id="progress"></div>
-                        <div class="controls">
-                            <button id="startBtn" onclick="startQuiz()">Start Quiz</button>
-                            <button id="pauseBtn" onclick="togglePause()" class="btn-secondary" disabled>Pause</button>
-                            <button id="stopBtn" onclick="stopQuiz()" class="btn-danger" disabled>Stop Quiz</button>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -1072,15 +1072,23 @@
             });
         }
 
-        function togglePause() {
-            isPaused = !isPaused;
-            const pauseBtn = document.getElementById('pauseBtn');
-            if (isPaused) {
-                pauseBtn.textContent = 'Resume';
-                window.speechSynthesis.pause();
+        function toggleStartPause() {
+            if (!isQuizRunning) {
+                // Not running, so start the quiz
+                startQuiz();
             } else {
-                pauseBtn.textContent = 'Pause';
-                window.speechSynthesis.resume();
+                // Running, so toggle pause
+                isPaused = !isPaused;
+                const btn = document.getElementById('startPauseBtn');
+                if (isPaused) {
+                    btn.textContent = 'Resume';
+                    btn.classList.remove('btn-secondary');
+                    window.speechSynthesis.pause();
+                } else {
+                    btn.textContent = 'Pause';
+                    btn.classList.add('btn-secondary');
+                    window.speechSynthesis.resume();
+                }
             }
         }
 
@@ -1423,13 +1431,12 @@
             isQuizRunning = true;
             stopRequested = false;
 
-            document.getElementById('startBtn').disabled = true;
-            document.getElementById('pauseBtn').disabled = false;
+            document.getElementById('startPauseBtn').textContent = 'Pause';
+            document.getElementById('startPauseBtn').classList.add('btn-secondary');
             document.getElementById('stopBtn').disabled = false;
             document.getElementById('responseSection').classList.add('visible');
             enableResponseButtons(true);
             isPaused = false;
-            document.getElementById('pauseBtn').textContent = 'Pause';
 
             const currentWordEl = document.getElementById('currentWord');
             const progress = document.getElementById('progress');
@@ -1499,9 +1506,8 @@
             isPaused = false;
             currentQuizWord = null;
 
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('pauseBtn').disabled = true;
-            document.getElementById('pauseBtn').textContent = 'Pause';
+            document.getElementById('startPauseBtn').textContent = 'Start Quiz';
+            document.getElementById('startPauseBtn').classList.remove('btn-secondary');
             document.getElementById('stopBtn').disabled = true;
             document.getElementById('responseSection').classList.remove('visible');
             enableResponseButtons(false);
