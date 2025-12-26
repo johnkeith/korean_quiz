@@ -4,6 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Korean Quiz">
+    <link rel="apple-touch-icon" href="icon-180.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
     <title>Korean Quiz App</title>
     <style>
         * {
@@ -179,6 +184,7 @@
             width: 100%;
             max-width: 600px;
             padding: 20px 24px;
+            padding-bottom: 40px;
         }
 
         /* Content Styles */
@@ -515,6 +521,127 @@
             color: #1a1a1a;
             font-size: 14px;
         }
+
+        /* Response buttons for spaced repetition */
+        .response-section {
+            display: none;
+            background: #fff;
+            border-top: 1px solid #eee;
+            padding: 16px 20px;
+            padding-bottom: max(16px, env(safe-area-inset-bottom));
+        }
+
+        .response-section.visible {
+            display: block;
+        }
+
+        .response-section h3 {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .response-buttons {
+            display: flex;
+            flex-direction: row-reverse;
+            gap: 12px;
+        }
+
+        @media (max-width: 500px) {
+            .response-buttons {
+                flex-direction: column-reverse;
+            }
+        }
+
+        .response-buttons button {
+            flex: 1;
+            padding: 14px 12px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 10px;
+        }
+
+        .btn-yes {
+            background: linear-gradient(180deg, #34a853 0%, #2d9248 100%);
+        }
+
+        .btn-maybe {
+            background: linear-gradient(180deg, #f97316 0%, #ea580c 100%);
+        }
+
+        .btn-no {
+            background: linear-gradient(180deg, #ea4335 0%, #d33426 100%);
+        }
+
+        .response-buttons button:disabled {
+            background: #ccc;
+            color: #888;
+        }
+
+        .response-buttons button.selected {
+            box-shadow: inset 0 0 0 100px rgba(0, 0, 0, 0.2);
+        }
+
+        .response-buttons button.unselected {
+            opacity: 0.4;
+        }
+
+        /* Sortable table */
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th.sortable:hover {
+            background-color: #004590;
+        }
+
+        th.sortable::after {
+            content: '';
+            margin-left: 6px;
+        }
+
+        th.sortable.asc::after {
+            content: '▲';
+        }
+
+        th.sortable.desc::after {
+            content: '▼';
+        }
+
+        /* Rating badges */
+        .rating-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .rating-good {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .rating-neutral {
+            background: #ffedd5;
+            color: #c2410c;
+        }
+
+        .rating-poor {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .rating-unknown {
+            background: #e9ecef;
+            color: #6c757d;
+        }
     </style>
 </head>
 
@@ -562,6 +689,14 @@
                             <button id="stopBtn" onclick="stopQuiz()" class="btn-danger" disabled>Stop Quiz</button>
                         </div>
                     </div>
+                </div>
+            </div>
+            <div id="responseSection" class="response-section">
+                <h3>Word Recall</h3>
+                <div class="response-buttons">
+                    <button id="btnYes" class="btn-yes" onclick="recordResponse('good')" disabled>Yes!</button>
+                    <button id="btnMaybe" class="btn-maybe" onclick="recordResponse('neutral')" disabled>Maybe...</button>
+                    <button id="btnNo" class="btn-no" onclick="recordResponse('poor')" disabled>No.</button>
                 </div>
             </div>
         </div>
@@ -679,6 +814,15 @@
         let firstWord = 'english';
         let currentPage = 'home';
 
+        // Spaced repetition tracking
+        let wordKnowledge = {}; // { "english|korean": "good"|"neutral"|"poor"|"unknown" }
+        let shownWords = new Set(); // Track words shown in current/continued session
+        let currentQuizWord = null; // Currently displayed word for response buttons
+
+        // Word list sorting
+        let sortColumn = null; // 'english', 'korean', 'rating'
+        let sortDirection = 'asc'; // 'asc' or 'desc'
+
         // Navigation
         function navigateTo(page) {
             const homePage = document.getElementById('home-page');
@@ -759,6 +903,8 @@
             loadSpeedSetting();
             loadPauseDuration();
             loadFirstWord();
+            loadWordKnowledge();
+            loadShownWords();
             populateVoiceSelectors();
             handleInitialRoute();
         });
@@ -836,6 +982,76 @@
             const selected = document.querySelector('input[name="firstWord"]:checked');
             firstWord = selected.value;
             localStorage.setItem('firstWord', firstWord);
+        }
+
+        function getWordKey(word) {
+            return `${word.english}|${word.korean}`;
+        }
+
+        function loadWordKnowledge() {
+            const stored = localStorage.getItem('wordKnowledge');
+            if (stored) {
+                wordKnowledge = JSON.parse(stored);
+            }
+        }
+
+        function saveWordKnowledge() {
+            localStorage.setItem('wordKnowledge', JSON.stringify(wordKnowledge));
+        }
+
+        function loadShownWords() {
+            const stored = localStorage.getItem('shownWords');
+            if (stored) {
+                shownWords = new Set(JSON.parse(stored));
+            }
+        }
+
+        function saveShownWords() {
+            localStorage.setItem('shownWords', JSON.stringify([...shownWords]));
+        }
+
+        function getWordKnowledgeLevel(word) {
+            const key = getWordKey(word);
+            return wordKnowledge[key] || 'unknown';
+        }
+
+        function setWordKnowledgeLevel(word, level) {
+            const key = getWordKey(word);
+            wordKnowledge[key] = level;
+            saveWordKnowledge();
+        }
+
+        function recordResponse(level) {
+            if (currentQuizWord) {
+                setWordKnowledgeLevel(currentQuizWord, level);
+
+                // Clear previous selection
+                document.querySelectorAll('.response-buttons button').forEach(btn => {
+                    btn.classList.remove('selected', 'unselected');
+                });
+
+                // Mark the selected button and dim others
+                const btnId = level === 'good' ? 'btnYes' : level === 'neutral' ? 'btnMaybe' : 'btnNo';
+                const btn = document.getElementById(btnId);
+                btn.classList.add('selected');
+
+                // Mark other buttons as unselected
+                document.querySelectorAll('.response-buttons button').forEach(b => {
+                    if (b !== btn) {
+                        b.classList.add('unselected');
+                    }
+                });
+
+                // Brief animation feedback
+                btn.style.transform = 'scale(0.95)';
+                setTimeout(() => btn.style.transform = '', 150);
+            }
+        }
+
+        function clearResponseSelection() {
+            document.querySelectorAll('.response-buttons button').forEach(btn => {
+                btn.classList.remove('selected', 'unselected');
+            });
         }
 
         function togglePause() {
@@ -1034,6 +1250,49 @@
             return result.map(s => s.replace(/^"|"$/g, ''));
         }
 
+        function getRatingBadge(level) {
+            const labels = { good: 'Good', neutral: 'Maybe', poor: 'Poor', unknown: '—' };
+            return `<span class="rating-badge rating-${level}">${labels[level]}</span>`;
+        }
+
+        function getSortedWords() {
+            if (!sortColumn) {
+                return words.map((word, index) => ({ word, originalIndex: index }));
+            }
+
+            const ratingOrder = { unknown: 0, poor: 1, neutral: 2, good: 3 };
+
+            return words.map((word, index) => ({ word, originalIndex: index }))
+                .sort((a, b) => {
+                    let valA, valB;
+
+                    if (sortColumn === 'english') {
+                        valA = a.word.english.toLowerCase();
+                        valB = b.word.english.toLowerCase();
+                    } else if (sortColumn === 'korean') {
+                        valA = a.word.korean;
+                        valB = b.word.korean;
+                    } else if (sortColumn === 'rating') {
+                        valA = ratingOrder[getWordKnowledgeLevel(a.word)];
+                        valB = ratingOrder[getWordKnowledgeLevel(b.word)];
+                    }
+
+                    if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+                    if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+                    return 0;
+                });
+        }
+
+        function sortWords(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+            displayWords();
+        }
+
         function displayWords() {
             const wordList = document.getElementById('wordList');
             const wordCount = document.getElementById('wordCount');
@@ -1045,13 +1304,27 @@
                 return;
             }
 
-            let html = '<table><thead><tr><th>#</th><th>English</th><th>Korean</th><th></th></tr></thead><tbody>';
-            words.forEach((word, index) => {
+            const engClass = sortColumn === 'english' ? sortDirection : '';
+            const korClass = sortColumn === 'korean' ? sortDirection : '';
+            const ratingClass = sortColumn === 'rating' ? sortDirection : '';
+
+            let html = `<table><thead><tr>
+                <th>#</th>
+                <th class="sortable ${engClass}" onclick="sortWords('english')">English</th>
+                <th class="sortable ${korClass}" onclick="sortWords('korean')">Korean</th>
+                <th class="sortable ${ratingClass}" onclick="sortWords('rating')">Rating</th>
+                <th></th>
+            </tr></thead><tbody>`;
+
+            const sortedWords = getSortedWords();
+            sortedWords.forEach(({ word, originalIndex }, displayIndex) => {
+                const level = getWordKnowledgeLevel(word);
                 html += `<tr>
-                    <td>${index + 1}</td>
+                    <td>${displayIndex + 1}</td>
                     <td>${escapeHtml(word.english)}</td>
                     <td>${escapeHtml(word.korean)}</td>
-                    <td><button onclick="removeWord(${index})" class="btn-remove" title="Remove">&times;</button></td>
+                    <td>${getRatingBadge(level)}</td>
+                    <td><button onclick="removeWord(${originalIndex})" class="btn-remove" title="Remove">&times;</button></td>
                 </tr>`;
             });
             html += '</tbody></table>';
@@ -1079,6 +1352,48 @@
             displayWords();
         }
 
+        function getOrderedWords() {
+            // Check if all words have been shown - if so, reset
+            const allShown = words.every(w => shownWords.has(getWordKey(w)));
+            if (allShown) {
+                shownWords.clear();
+                saveShownWords();
+            }
+
+            // Filter to only unshown words
+            const unshownWords = words.filter(w => !shownWords.has(getWordKey(w)));
+
+            // Categorize by knowledge level
+            const poor = [];
+            const neutral = [];
+            const good = [];
+            const unknown = [];
+
+            unshownWords.forEach(word => {
+                const level = getWordKnowledgeLevel(word);
+                if (level === 'poor') poor.push(word);
+                else if (level === 'neutral') neutral.push(word);
+                else if (level === 'good') good.push(word);
+                else unknown.push(word);
+            });
+
+            // Shuffle each category
+            const shuffle = arr => arr.sort(() => Math.random() - 0.5);
+            shuffle(poor);
+            shuffle(neutral);
+            shuffle(good);
+            shuffle(unknown);
+
+            // Return in priority order: poor, neutral, good, unknown
+            return [...poor, ...neutral, ...good, ...unknown];
+        }
+
+        function enableResponseButtons(enabled) {
+            document.getElementById('btnYes').disabled = !enabled;
+            document.getElementById('btnMaybe').disabled = !enabled;
+            document.getElementById('btnNo').disabled = !enabled;
+        }
+
         async function startQuiz() {
             if (words.length === 0) {
                 alert('No words loaded. Please upload a CSV first.');
@@ -1093,24 +1408,35 @@
             document.getElementById('startBtn').disabled = true;
             document.getElementById('pauseBtn').disabled = false;
             document.getElementById('stopBtn').disabled = false;
+            document.getElementById('responseSection').classList.add('visible');
+            enableResponseButtons(true);
             isPaused = false;
             document.getElementById('pauseBtn').textContent = 'Pause';
 
-            const currentWord = document.getElementById('currentWord');
+            const currentWordEl = document.getElementById('currentWord');
             const progress = document.getElementById('progress');
 
-            const shuffledWords = [...words].sort(() => Math.random() - 0.5);
+            const orderedWords = getOrderedWords();
 
-            for (let i = 0; i < shuffledWords.length; i++) {
+            for (let i = 0; i < orderedWords.length; i++) {
                 if (stopRequested) break;
 
-                const word = shuffledWords[i];
-                progress.textContent = `Word ${i + 1} of ${shuffledWords.length}`;
+                const word = orderedWords[i];
+                currentQuizWord = word;
+
+                // Clear previous response selection
+                clearResponseSelection();
+
+                // Mark word as shown and persist
+                shownWords.add(getWordKey(word));
+                saveShownWords();
+
+                progress.textContent = `Word ${i + 1} of ${orderedWords.length}`;
 
                 const first = firstWord === 'english' ? { text: word.english, lang: 'en-US', class: 'english' } : { text: word.korean, lang: 'ko-KR', class: 'korean' };
                 const second = firstWord === 'english' ? { text: word.korean, lang: 'ko-KR', class: 'korean' } : { text: word.english, lang: 'en-US', class: 'english' };
 
-                currentWord.innerHTML = `<div class="${first.class}">${escapeHtml(first.text)}</div>`;
+                currentWordEl.innerHTML = `<div class="${first.class}">${escapeHtml(first.text)}</div>`;
                 await speak(first.text, first.lang);
 
                 if (stopRequested) break;
@@ -1119,7 +1445,7 @@
 
                 if (stopRequested) break;
 
-                currentWord.innerHTML = `
+                currentWordEl.innerHTML = `
                     <div class="${first.class}">${escapeHtml(first.text)}</div>
                     <div class="${second.class}">${escapeHtml(second.text)}</div>
                 `;
@@ -1135,7 +1461,7 @@
 
                 if (stopRequested) break;
 
-                if (i < shuffledWords.length - 1) {
+                if (i < orderedWords.length - 1) {
                     await pauseDelay(pauseDuration * 1000);
                 }
             }
@@ -1153,11 +1479,14 @@
             isQuizRunning = false;
             stopRequested = false;
             isPaused = false;
+            currentQuizWord = null;
 
             document.getElementById('startBtn').disabled = false;
             document.getElementById('pauseBtn').disabled = true;
             document.getElementById('pauseBtn').textContent = 'Pause';
             document.getElementById('stopBtn').disabled = true;
+            document.getElementById('responseSection').classList.remove('visible');
+            enableResponseButtons(false);
 
             document.getElementById('currentWord').innerHTML = '';
             document.getElementById('progress').textContent = '';
