@@ -1010,7 +1010,7 @@
                         <h2>About</h2>
                         <div class="setting-item">
                             <span class="setting-label">Version</span>
-                            <span class="setting-value">1.5.5</span>
+                            <span class="setting-value">1.5.6</span>
                         </div>
                         <div class="setting-item">
                             <span class="setting-label">Words Loaded</span>
@@ -1796,7 +1796,7 @@
 
         function downloadBackup() {
             const backup = {
-                version: '1.5.5',
+                version: '1.5.6',
                 exportDate: new Date().toISOString(),
                 words: words,
                 wordKnowledge: wordKnowledge,
@@ -1905,50 +1905,32 @@
         }
 
         function getOrderedWords() {
-            // Start with all words, optionally filtered by quiz filter
-            let eligibleWords = words;
+            const shuffle = arr => arr.sort(() => Math.random() - 0.5);
+
+            // If a filter is active, show all words from that category (shuffled), ignore shown tracking
             if (quizFilter !== 'all') {
-                eligibleWords = words.filter(w => {
+                const filteredWords = words.filter(w => {
                     const level = getWordKnowledgeLevel(w);
                     if (quizFilter === 'weak') return level === 'poor' || level === 'neutral';
                     if (quizFilter === 'unknown') return level === 'unknown';
                     return true;
                 });
+                shuffle(filteredWords);
+                return filteredWords;
             }
 
-            // Check if all eligible words have been shown - if so, reset
-            const allShown = eligibleWords.every(w => shownWords.has(getWordKey(w)));
+            // For "All" - track what's been shown, show unshown words shuffled
+            // Check if all words have been shown - if so, reset
+            const allShown = words.every(w => shownWords.has(getWordKey(w)));
             if (allShown) {
                 shownWords.clear();
                 saveShownWords();
             }
 
-            // Filter to only unshown words
-            const unshownWords = eligibleWords.filter(w => !shownWords.has(getWordKey(w)));
-
-            // Categorize by knowledge level
-            const poor = [];
-            const neutral = [];
-            const good = [];
-            const unknown = [];
-
-            unshownWords.forEach(word => {
-                const level = getWordKnowledgeLevel(word);
-                if (level === 'poor') poor.push(word);
-                else if (level === 'neutral') neutral.push(word);
-                else if (level === 'good') good.push(word);
-                else unknown.push(word);
-            });
-
-            // Shuffle each category
-            const shuffle = arr => arr.sort(() => Math.random() - 0.5);
-            shuffle(poor);
-            shuffle(neutral);
-            shuffle(good);
-            shuffle(unknown);
-
-            // Return in priority order: poor, neutral, unknown, good
-            return [...poor, ...neutral, ...unknown, ...good];
+            // Get unshown words and shuffle them
+            const unshownWords = words.filter(w => !shownWords.has(getWordKey(w)));
+            shuffle(unshownWords);
+            return unshownWords;
         }
 
         function enableResponseButtons(enabled) {
