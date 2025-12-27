@@ -383,6 +383,34 @@
             display: none;
         }
 
+        .quiz-filter-option {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 15px 5px;
+            background: #f5f5f5;
+            border-radius: 12px;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .quiz-filter-option input[type="checkbox"] {
+            width: 32px;
+            height: 32px;
+            accent-color: #003478;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .quiz-filter-option span {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .quiz-filter-option input[type="checkbox"]:checked {
+            accent-color: #34a853;
+        }
+
         /* Voice settings */
         .voice-row {
             display: flex;
@@ -795,6 +823,10 @@
                             Manual
                             <span class="mode-desc">Rate each word to continue</span>
                         </button>
+                        <label class="quiz-filter-option">
+                            <input type="checkbox" id="reviewOnlyWeak" onchange="saveQuizFilter()">
+                            <span>Review only weak words</span>
+                        </label>
                     </div>
 
                     <!-- Active Quiz Area -->
@@ -927,7 +959,7 @@
                         <h2>About</h2>
                         <div class="setting-item">
                             <span class="setting-label">Version</span>
-                            <span class="setting-value">1.4.3</span>
+                            <span class="setting-value">1.4.7</span>
                         </div>
                         <div class="setting-item">
                             <span class="setting-label">Words Loaded</span>
@@ -963,6 +995,7 @@
         let quizMode = null; // 'handsfree' or 'manual'
         let manualAdvance = false; // Flag for manual mode to advance to next word
         let skipToNextWord = false; // Flag to skip remaining steps for current word
+        let reviewOnlyWeak = false; // Filter to only review Maybe & Poor words
 
         // Spaced repetition tracking
         let wordKnowledge = {}; // { "id": "good"|"neutral"|"poor"|"unknown" }
@@ -1061,6 +1094,7 @@
             loadSpeedSetting();
             loadPauseDuration();
             loadFirstWord();
+            loadQuizFilter();
             populateVoiceSelectors();
             handleInitialRoute();
         });
@@ -1179,6 +1213,19 @@
             localStorage.setItem('firstWord', firstWord);
         }
 
+        function loadQuizFilter() {
+            const stored = localStorage.getItem('reviewOnlyWeak');
+            if (stored) {
+                reviewOnlyWeak = stored === 'true';
+                document.getElementById('reviewOnlyWeak').checked = reviewOnlyWeak;
+            }
+        }
+
+        function saveQuizFilter() {
+            reviewOnlyWeak = document.getElementById('reviewOnlyWeak').checked;
+            localStorage.setItem('reviewOnlyWeak', reviewOnlyWeak.toString());
+        }
+
         function generateWordId() {
             return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
         }
@@ -1282,6 +1329,18 @@
             if (words.length === 0) {
                 alert('No words loaded. Please upload a CSV first.');
                 return;
+            }
+
+            // Check if filter is enabled but no matching words
+            if (reviewOnlyWeak) {
+                const weakWords = words.filter(w => {
+                    const level = getWordKnowledgeLevel(w);
+                    return level === 'poor' || level === 'neutral';
+                });
+                if (weakWords.length === 0) {
+                    alert('No Maybe or Poor words to review. Uncheck the filter or rate some words first.');
+                    return;
+                }
             }
 
             quizMode = mode;
@@ -1683,7 +1742,7 @@
 
         function downloadBackup() {
             const backup = {
-                version: '1.4.3',
+                version: '1.4.7',
                 exportDate: new Date().toISOString(),
                 words: words,
                 wordKnowledge: wordKnowledge,
@@ -1792,15 +1851,24 @@
         }
 
         function getOrderedWords() {
-            // Check if all words have been shown - if so, reset
-            const allShown = words.every(w => shownWords.has(getWordKey(w)));
+            // Start with all words, optionally filtered by weak-only setting
+            let eligibleWords = words;
+            if (reviewOnlyWeak) {
+                eligibleWords = words.filter(w => {
+                    const level = getWordKnowledgeLevel(w);
+                    return level === 'poor' || level === 'neutral';
+                });
+            }
+
+            // Check if all eligible words have been shown - if so, reset
+            const allShown = eligibleWords.every(w => shownWords.has(getWordKey(w)));
             if (allShown) {
                 shownWords.clear();
                 saveShownWords();
             }
 
             // Filter to only unshown words
-            const unshownWords = words.filter(w => !shownWords.has(getWordKey(w)));
+            const unshownWords = eligibleWords.filter(w => !shownWords.has(getWordKey(w)));
 
             // Categorize by knowledge level
             const poor = [];
