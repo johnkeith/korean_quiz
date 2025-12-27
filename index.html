@@ -793,22 +793,31 @@
             margin-bottom: 16px;
         }
 
-        .word-stat {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
+        .stats-section {
+            margin-bottom: 12px;
         }
 
-        .word-stat:last-child {
-            border-bottom: none;
-        }
-
-        .word-stat .count {
+        .stats-header {
             font-weight: 600;
-            font-size: 15px;
+            font-size: 13px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .stats-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .stats-row .count {
+            font-weight: 600;
+            font-size: 14px;
             color: #333;
+            margin-right: 12px;
         }
     </style>
 </head>
@@ -1012,7 +1021,7 @@
                         <h2>About</h2>
                         <div class="setting-item">
                             <span class="setting-label">Version</span>
-                            <span class="setting-value">1.6.1</span>
+                            <span class="setting-value">2.0.1</span>
                         </div>
                         <div class="setting-item">
                             <span class="setting-label">Words Loaded</span>
@@ -1056,7 +1065,7 @@
         let currentQuizWord = null; // Currently displayed word for response buttons
 
         // Word list sorting
-        let sortColumn = 'rating'; // 'english', 'korean', 'rating'
+        let sortColumn = 'english'; // 'english', 'korean', 'ratingEng', 'ratingKor'
         let sortDirection = 'desc'; // 'asc' or 'desc'
 
 
@@ -1076,9 +1085,11 @@
 
             currentPage = page;
 
-            // Update word counts when navigating
+            // Update data when navigating
             if (page === 'settings') {
                 document.getElementById('settingsWordCount').textContent = words.length;
+            } else if (page === 'words') {
+                displayWords();
             }
         }
 
@@ -1310,14 +1321,21 @@
             localStorage.setItem('shownWords', JSON.stringify([...shownWords]));
         }
 
-        function getWordKnowledgeLevel(word) {
+        function getWordKnowledgeLevel(word, mode = firstWord) {
             const key = getWordKey(word);
-            return wordKnowledge[key] || 'unknown';
+            const knowledge = wordKnowledge[key];
+            if (!knowledge) return 'unknown';
+            const modeKey = mode === 'english' ? 'englishFirst' : 'koreanFirst';
+            return knowledge[modeKey] || 'unknown';
         }
 
-        function setWordKnowledgeLevel(word, level) {
+        function setWordKnowledgeLevel(word, level, mode = firstWord) {
             const key = getWordKey(word);
-            wordKnowledge[key] = level;
+            if (!wordKnowledge[key]) {
+                wordKnowledge[key] = { englishFirst: 'unknown', koreanFirst: 'unknown' };
+            }
+            const modeKey = mode === 'english' ? 'englishFirst' : 'koreanFirst';
+            wordKnowledge[key][modeKey] = level;
             saveWordKnowledge();
         }
 
@@ -1668,9 +1686,12 @@
                     } else if (sortColumn === 'korean') {
                         valA = a.word.korean;
                         valB = b.word.korean;
-                    } else if (sortColumn === 'rating') {
-                        valA = ratingOrder[getWordKnowledgeLevel(a.word)];
-                        valB = ratingOrder[getWordKnowledgeLevel(b.word)];
+                    } else if (sortColumn === 'ratingEng') {
+                        valA = ratingOrder[getWordKnowledgeLevel(a.word, 'english')];
+                        valB = ratingOrder[getWordKnowledgeLevel(b.word, 'english')];
+                    } else if (sortColumn === 'ratingKor') {
+                        valA = ratingOrder[getWordKnowledgeLevel(a.word, 'korean')];
+                        valB = ratingOrder[getWordKnowledgeLevel(b.word, 'korean')];
                     }
 
                     if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
@@ -1696,20 +1717,37 @@
 
             wordCount.textContent = words.length;
 
-            // Calculate stats
-            let stats = { good: 0, neutral: 0, poor: 0, unknown: 0 };
+            // Calculate stats for both modes
+            let statsEnglish = { good: 0, neutral: 0, poor: 0, unknown: 0 };
+            let statsKorean = { good: 0, neutral: 0, poor: 0, unknown: 0 };
             words.forEach(word => {
-                const level = getWordKnowledgeLevel(word);
-                stats[level]++;
+                const levelEng = getWordKnowledgeLevel(word, 'english');
+                const levelKor = getWordKnowledgeLevel(word, 'korean');
+                statsEnglish[levelEng]++;
+                statsKorean[levelKor]++;
             });
 
             // Display stats
             if (words.length > 0) {
                 wordStats.innerHTML = `
-                    <div class="word-stat"><span class="rating-badge rating-good">Good</span><span class="count">${stats.good}</span></div>
-                    <div class="word-stat"><span class="rating-badge rating-neutral">Maybe</span><span class="count">${stats.neutral}</span></div>
-                    <div class="word-stat"><span class="rating-badge rating-poor">Poor</span><span class="count">${stats.poor}</span></div>
-                    <div class="word-stat"><span class="rating-badge rating-unknown">Unknown</span><span class="count">${stats.unknown}</span></div>
+                    <div class="stats-section">
+                        <div class="stats-header">English First</div>
+                        <div class="stats-row">
+                            <span class="rating-badge rating-good">Good</span><span class="count">${statsEnglish.good}</span>
+                            <span class="rating-badge rating-neutral">Maybe</span><span class="count">${statsEnglish.neutral}</span>
+                            <span class="rating-badge rating-poor">Poor</span><span class="count">${statsEnglish.poor}</span>
+                            <span class="rating-badge rating-unknown">?</span><span class="count">${statsEnglish.unknown}</span>
+                        </div>
+                    </div>
+                    <div class="stats-section">
+                        <div class="stats-header">Korean First</div>
+                        <div class="stats-row">
+                            <span class="rating-badge rating-good">Good</span><span class="count">${statsKorean.good}</span>
+                            <span class="rating-badge rating-neutral">Maybe</span><span class="count">${statsKorean.neutral}</span>
+                            <span class="rating-badge rating-poor">Poor</span><span class="count">${statsKorean.poor}</span>
+                            <span class="rating-badge rating-unknown">?</span><span class="count">${statsKorean.unknown}</span>
+                        </div>
+                    </div>
                 `;
             } else {
                 wordStats.innerHTML = '';
@@ -1722,24 +1760,26 @@
 
             const engClass = sortColumn === 'english' ? sortDirection : '';
             const korClass = sortColumn === 'korean' ? sortDirection : '';
-            const ratingClass = sortColumn === 'rating' ? sortDirection : '';
+            const ratingEngClass = sortColumn === 'ratingEng' ? sortDirection : '';
+            const ratingKorClass = sortColumn === 'ratingKor' ? sortDirection : '';
 
             let html = `<table><thead><tr>
-                <th>#</th>
                 <th class="sortable ${engClass}" onclick="sortWords('english')">English</th>
                 <th class="sortable ${korClass}" onclick="sortWords('korean')">Korean</th>
-                <th class="sortable ${ratingClass}" onclick="sortWords('rating')">Rating</th>
+                <th class="sortable ${ratingEngClass}" onclick="sortWords('ratingEng')">E→K</th>
+                <th class="sortable ${ratingKorClass}" onclick="sortWords('ratingKor')">K→E</th>
                 <th></th>
             </tr></thead><tbody>`;
 
             const sortedWords = getSortedWords();
             sortedWords.forEach(({ word, originalIndex }, displayIndex) => {
-                const level = getWordKnowledgeLevel(word);
+                const levelEng = getWordKnowledgeLevel(word, 'english');
+                const levelKor = getWordKnowledgeLevel(word, 'korean');
                 html += `<tr>
-                    <td>${displayIndex + 1}</td>
                     <td>${escapeHtml(word.english)}</td>
                     <td>${escapeHtml(word.korean)}</td>
-                    <td>${getRatingBadge(level)}</td>
+                    <td>${getRatingBadge(levelEng)}</td>
+                    <td>${getRatingBadge(levelKor)}</td>
                     <td><button onclick="removeWord(${originalIndex})" class="btn-remove" title="Remove">&times;</button></td>
                 </tr>`;
             });
@@ -1798,7 +1838,7 @@
 
         function downloadBackup() {
             const backup = {
-                version: '1.6.1',
+                version: '2.0.1',
                 exportDate: new Date().toISOString(),
                 words: words,
                 wordKnowledge: wordKnowledge,
