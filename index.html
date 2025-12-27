@@ -1010,7 +1010,7 @@
                         <h2>About</h2>
                         <div class="setting-item">
                             <span class="setting-label">Version</span>
-                            <span class="setting-value">1.5.4</span>
+                            <span class="setting-value">1.5.5</span>
                         </div>
                         <div class="setting-item">
                             <span class="setting-label">Words Loaded</span>
@@ -1796,7 +1796,7 @@
 
         function downloadBackup() {
             const backup = {
-                version: '1.5.4',
+                version: '1.5.5',
                 exportDate: new Date().toISOString(),
                 words: words,
                 wordKnowledge: wordKnowledge,
@@ -1947,8 +1947,8 @@
             shuffle(good);
             shuffle(unknown);
 
-            // Return in priority order: poor, neutral, good, unknown
-            return [...poor, ...neutral, ...good, ...unknown];
+            // Return in priority order: poor, neutral, unknown, good
+            return [...poor, ...neutral, ...unknown, ...good];
         }
 
         function enableResponseButtons(enabled) {
