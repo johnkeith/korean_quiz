@@ -246,7 +246,7 @@
         }
 
         button {
-            background: linear-gradient(180deg, #C60C30 0%, #a00a28 100%);
+            background: linear-gradient(180deg, #003478 0%, #002855 100%);
             color: white;
             border: none;
             padding: 14px 24px;
@@ -287,7 +287,7 @@
         }
 
         .btn-upload {
-            width: 50%;
+            width: 100%;
         }
 
         .btn-clear {
@@ -442,6 +442,8 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+            border-top: 1px solid #ddd;
+            padding-top: 32px;
         }
 
         /* Voice settings */
@@ -871,7 +873,8 @@
                             <label class="quiz-section-label">First Word Spoken</label>
                             <div class="quiz-filter-options">
                                 <label class="quiz-filter-option">
-                                    <input type="radio" name="firstWord" value="english" checked onchange="updateFirstWord()">
+                                    <input type="radio" name="firstWord" value="english" checked
+                                        onchange="updateFirstWord()">
                                     <span>English</span>
                                 </label>
                                 <label class="quiz-filter-option">
@@ -932,7 +935,7 @@
                         <p>Upload a CSV file with terms to study. Put the English words in column A and their Korean
                             definitions in column B.</p>
                         <input type="file" id="csvFile" accept=".csv">
-                        <button onclick="handleUpload()" class="btn-upload btn-yellow">Upload</button>
+                        <button onclick="handleUpload()" class="btn-upload btn-secondary">Upload</button>
                     </div>
 
                     <div class="section">
@@ -1001,16 +1004,15 @@
 
                         <p style="margin-top: 20px;">Restore from a previous backup file.</p>
                         <input type="file" id="restoreFile" accept=".json" style="margin-top: 8px;">
-                        <button onclick="restoreBackup()" class="btn-yellow"
-                            style="width: 100%; margin-top: 12px;">Restore
-                            from Backup</button>
+                        <button onclick="restoreBackup()" class="btn-danger" style="width: 100%;">Restore from
+                            Backup</button>
                     </div>
 
                     <div class="section">
                         <h2>About</h2>
                         <div class="setting-item">
                             <span class="setting-label">Version</span>
-                            <span class="setting-value">1.5.7</span>
+                            <span class="setting-value">1.6.1</span>
                         </div>
                         <div class="setting-item">
                             <span class="setting-label">Words Loaded</span>
@@ -1796,7 +1798,7 @@
 
         function downloadBackup() {
             const backup = {
-                version: '1.5.7',
+                version: '1.6.1',
                 exportDate: new Date().toISOString(),
                 words: words,
                 wordKnowledge: wordKnowledge,
