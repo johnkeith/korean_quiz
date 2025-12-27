@@ -281,6 +281,11 @@
             background: linear-gradient(180deg, #1a1a1a 0%, #333333 100%);
         }
 
+        .btn-yellow {
+            background: linear-gradient(180deg, #FFD54F 0%, #FFCA28 100%);
+            color: #1a1a1a;
+        }
+
         .btn-upload {
             width: 50%;
         }
@@ -383,32 +388,60 @@
             display: none;
         }
 
-        .quiz-filter-option {
+        .quiz-filter-section {
             display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 15px 5px;
-            background: #f5f5f5;
-            border-radius: 12px;
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 16px;
         }
 
-        .quiz-filter-option input[type="checkbox"] {
-            width: 32px;
-            height: 32px;
-            accent-color: #003478;
+        .quiz-section-label {
+            display: block;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .quiz-filter-options {
+            display: flex;
+            gap: 8px;
+        }
+
+        .quiz-filter-option {
+            flex: 1;
+            text-align: center;
+            padding: 14px 8px;
+            background: #f5f5f5;
+            border-radius: 10px;
             cursor: pointer;
-            flex-shrink: 0;
+            -webkit-tap-highlight-color: transparent;
+            transition: all 0.15s ease;
+        }
+
+        .quiz-filter-option input[type="radio"] {
+            display: none;
         }
 
         .quiz-filter-option span {
-            font-size: 18px;
+            font-size: 15px;
+            font-weight: 600;
             color: #333;
         }
 
-        .quiz-filter-option input[type="checkbox"]:checked {
-            accent-color: #34a853;
+        .quiz-filter-option:has(input:checked) {
+            background: linear-gradient(180deg, #FFD54F 0%, #FFCA28 100%);
+        }
+
+        .quiz-filter-option:has(input:checked) span {
+            color: #1a1a1a;
+        }
+
+        .quiz-mode-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
         /* Voice settings */
@@ -815,18 +848,35 @@
                 <div class="page-content-inner">
                     <!-- Mode Selection -->
                     <div id="modeSelection" class="mode-selection">
-                        <button class="mode-btn mode-btn-handsfree" onclick="startQuizMode('handsfree')">
-                            Hands Free
-                            <span class="mode-desc">Auto-advances through words</span>
-                        </button>
-                        <button class="mode-btn mode-btn-manual" onclick="startQuizMode('manual')">
-                            Manual
-                            <span class="mode-desc">Rate each word to continue</span>
-                        </button>
-                        <label class="quiz-filter-option">
-                            <input type="checkbox" id="reviewOnlyWeak" onchange="saveQuizFilter()">
-                            <span>Review only weak words</span>
-                        </label>
+                        <div class="quiz-filter-section">
+                            <label class="quiz-section-label">Words to Review</label>
+                            <div class="quiz-filter-options">
+                                <label class="quiz-filter-option">
+                                    <input type="radio" name="quizFilter" value="all" checked
+                                        onchange="saveQuizFilter()">
+                                    <span>All</span>
+                                </label>
+                                <label class="quiz-filter-option">
+                                    <input type="radio" name="quizFilter" value="weak" onchange="saveQuizFilter()">
+                                    <span>Weak</span>
+                                </label>
+                                <label class="quiz-filter-option">
+                                    <input type="radio" name="quizFilter" value="unknown" onchange="saveQuizFilter()">
+                                    <span>Unknown</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="quiz-mode-section">
+                            <label class="quiz-section-label ">Quiz Modes</label>
+                            <button class="mode-btn mode-btn-handsfree" onclick="startQuizMode('handsfree')">
+                                Hands Free
+                                <span class="mode-desc">Auto-advances through words</span>
+                            </button>
+                            <button class="mode-btn mode-btn-manual" onclick="startQuizMode('manual')">
+                                Manual
+                                <span class="mode-desc">Rate each word to continue</span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Active Quiz Area -->
@@ -868,7 +918,7 @@
                         <p>Upload a CSV file with terms to study. Put the English words in column A and their Korean
                             definitions in column B.</p>
                         <input type="file" id="csvFile" accept=".csv">
-                        <button onclick="handleUpload()" class="btn-upload">Upload</button>
+                        <button onclick="handleUpload()" class="btn-upload btn-yellow">Upload</button>
                     </div>
 
                     <div class="section">
@@ -951,15 +1001,16 @@
 
                         <p style="margin-top: 20px;">Restore from a previous backup file.</p>
                         <input type="file" id="restoreFile" accept=".json" style="margin-top: 8px;">
-                        <button onclick="restoreBackup()" class="btn-dark"
-                            style="width: 100%; margin-top: 12px;">Restore from Backup</button>
+                        <button onclick="restoreBackup()" class="btn-yellow"
+                            style="width: 100%; margin-top: 12px;">Restore
+                            from Backup</button>
                     </div>
 
                     <div class="section">
                         <h2>About</h2>
                         <div class="setting-item">
                             <span class="setting-label">Version</span>
-                            <span class="setting-value">1.4.7</span>
+                            <span class="setting-value">1.5.4</span>
                         </div>
                         <div class="setting-item">
                             <span class="setting-label">Words Loaded</span>
@@ -995,7 +1046,7 @@
         let quizMode = null; // 'handsfree' or 'manual'
         let manualAdvance = false; // Flag for manual mode to advance to next word
         let skipToNextWord = false; // Flag to skip remaining steps for current word
-        let reviewOnlyWeak = false; // Filter to only review Maybe & Poor words
+        let quizFilter = 'all'; // 'all', 'weak', or 'unknown'
 
         // Spaced repetition tracking
         let wordKnowledge = {}; // { "id": "good"|"neutral"|"poor"|"unknown" }
@@ -1214,16 +1265,17 @@
         }
 
         function loadQuizFilter() {
-            const stored = localStorage.getItem('reviewOnlyWeak');
-            if (stored) {
-                reviewOnlyWeak = stored === 'true';
-                document.getElementById('reviewOnlyWeak').checked = reviewOnlyWeak;
+            const stored = localStorage.getItem('quizFilter');
+            if (stored && ['all', 'weak', 'unknown'].includes(stored)) {
+                quizFilter = stored;
+                document.querySelector(`input[name="quizFilter"][value="${quizFilter}"]`).checked = true;
             }
         }
 
         function saveQuizFilter() {
-            reviewOnlyWeak = document.getElementById('reviewOnlyWeak').checked;
-            localStorage.setItem('reviewOnlyWeak', reviewOnlyWeak.toString());
+            const selected = document.querySelector('input[name="quizFilter"]:checked');
+            quizFilter = selected.value;
+            localStorage.setItem('quizFilter', quizFilter);
         }
 
         function generateWordId() {
@@ -1332,13 +1384,15 @@
             }
 
             // Check if filter is enabled but no matching words
-            if (reviewOnlyWeak) {
-                const weakWords = words.filter(w => {
+            if (quizFilter !== 'all') {
+                const filteredWords = words.filter(w => {
                     const level = getWordKnowledgeLevel(w);
-                    return level === 'poor' || level === 'neutral';
+                    if (quizFilter === 'weak') return level === 'poor' || level === 'neutral';
+                    if (quizFilter === 'unknown') return level === 'unknown';
+                    return true;
                 });
-                if (weakWords.length === 0) {
-                    alert('No Maybe or Poor words to review. Uncheck the filter or rate some words first.');
+                if (filteredWords.length === 0) {
+                    alert('No words match your filter. Select "All" or rate some words first.');
                     return;
                 }
             }
@@ -1742,7 +1796,7 @@
 
         function downloadBackup() {
             const backup = {
-                version: '1.4.7',
+                version: '1.5.4',
                 exportDate: new Date().toISOString(),
                 words: words,
                 wordKnowledge: wordKnowledge,
@@ -1851,12 +1905,14 @@
         }
 
         function getOrderedWords() {
-            // Start with all words, optionally filtered by weak-only setting
+            // Start with all words, optionally filtered by quiz filter
             let eligibleWords = words;
-            if (reviewOnlyWeak) {
+            if (quizFilter !== 'all') {
                 eligibleWords = words.filter(w => {
                     const level = getWordKnowledgeLevel(w);
-                    return level === 'poor' || level === 'neutral';
+                    if (quizFilter === 'weak') return level === 'poor' || level === 'neutral';
+                    if (quizFilter === 'unknown') return level === 'unknown';
+                    return true;
                 });
             }
 
