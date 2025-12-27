@@ -866,8 +866,22 @@
                                 </label>
                             </div>
                         </div>
+
+                        <div class="quiz-filter-section">
+                            <label class="quiz-section-label">First Word Spoken</label>
+                            <div class="quiz-filter-options">
+                                <label class="quiz-filter-option">
+                                    <input type="radio" name="firstWord" value="english" checked onchange="updateFirstWord()">
+                                    <span>English</span>
+                                </label>
+                                <label class="quiz-filter-option">
+                                    <input type="radio" name="firstWord" value="korean" onchange="updateFirstWord()">
+                                    <span>Korean</span>
+                                </label>
+                            </div>
+                        </div>
+
                         <div class="quiz-mode-section">
-                            <label class="quiz-section-label ">Quiz Modes</label>
                             <button class="mode-btn mode-btn-handsfree" onclick="startQuizMode('handsfree')">
                                 Hands Free
                                 <span class="mode-desc">Auto-advances through words</span>
@@ -977,20 +991,6 @@
                             </div>
                         </div>
 
-                        <div class="radio-setting">
-                            <label>First Word Spoken</label>
-                            <div class="radio-group">
-                                <label class="radio-option">
-                                    <input type="radio" name="firstWord" value="english" checked
-                                        onchange="updateFirstWord()">
-                                    <span>English</span>
-                                </label>
-                                <label class="radio-option">
-                                    <input type="radio" name="firstWord" value="korean" onchange="updateFirstWord()">
-                                    <span>Korean</span>
-                                </label>
-                            </div>
-                        </div>
                     </div>
 
                     <div class="section">
@@ -1010,7 +1010,7 @@
                         <h2>About</h2>
                         <div class="setting-item">
                             <span class="setting-label">Version</span>
-                            <span class="setting-value">1.5.6</span>
+                            <span class="setting-value">1.5.7</span>
                         </div>
                         <div class="setting-item">
                             <span class="setting-label">Words Loaded</span>
@@ -1796,7 +1796,7 @@
 
         function downloadBackup() {
             const backup = {
-                version: '1.5.6',
+                version: '1.5.7',
                 exportDate: new Date().toISOString(),
                 words: words,
                 wordKnowledge: wordKnowledge,
