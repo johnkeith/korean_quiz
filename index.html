@@ -793,31 +793,30 @@
             margin-bottom: 16px;
         }
 
-        .stats-section {
-            margin-bottom: 12px;
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
         }
 
-        .stats-header {
+        .stats-table th {
             font-weight: 600;
             font-size: 13px;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
+            color: #fff;
+            background: #003478;
+            text-align: center;
+            padding: 8px 16px;
         }
 
-        .stats-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .stats-row .count {
+        .stats-table td {
+            padding: 6px 16px;
+            text-align: center;
             font-weight: 600;
-            font-size: 14px;
             color: #333;
-            margin-right: 12px;
+        }
+
+        .stats-table td:first-child {
+            text-align: left;
+            padding-left: 0;
         }
     </style>
 </head>
@@ -1021,7 +1020,7 @@
                         <h2>About</h2>
                         <div class="setting-item">
                             <span class="setting-label">Version</span>
-                            <span class="setting-value">2.0.1</span>
+                            <span class="setting-value">2.0.4</span>
                         </div>
                         <div class="setting-item">
                             <span class="setting-label">Words Loaded</span>
@@ -1727,27 +1726,40 @@
                 statsKorean[levelKor]++;
             });
 
-            // Display stats
+            // Display stats as table
             if (words.length > 0) {
                 wordStats.innerHTML = `
-                    <div class="stats-section">
-                        <div class="stats-header">English First</div>
-                        <div class="stats-row">
-                            <span class="rating-badge rating-good">Good</span><span class="count">${statsEnglish.good}</span>
-                            <span class="rating-badge rating-neutral">Maybe</span><span class="count">${statsEnglish.neutral}</span>
-                            <span class="rating-badge rating-poor">Poor</span><span class="count">${statsEnglish.poor}</span>
-                            <span class="rating-badge rating-unknown">?</span><span class="count">${statsEnglish.unknown}</span>
-                        </div>
-                    </div>
-                    <div class="stats-section">
-                        <div class="stats-header">Korean First</div>
-                        <div class="stats-row">
-                            <span class="rating-badge rating-good">Good</span><span class="count">${statsKorean.good}</span>
-                            <span class="rating-badge rating-neutral">Maybe</span><span class="count">${statsKorean.neutral}</span>
-                            <span class="rating-badge rating-poor">Poor</span><span class="count">${statsKorean.poor}</span>
-                            <span class="rating-badge rating-unknown">?</span><span class="count">${statsKorean.unknown}</span>
-                        </div>
-                    </div>
+                    <table class="stats-table">
+                        <thead>
+                            <tr>
+                                <th>Rating</th>
+                                <th>E→K</th>
+                                <th>K→E</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="rating-badge rating-good">Good</span></td>
+                                <td>${statsEnglish.good}</td>
+                                <td>${statsKorean.good}</td>
+                            </tr>
+                            <tr>
+                                <td><span class="rating-badge rating-neutral">Maybe</span></td>
+                                <td>${statsEnglish.neutral}</td>
+                                <td>${statsKorean.neutral}</td>
+                            </tr>
+                            <tr>
+                                <td><span class="rating-badge rating-poor">Poor</span></td>
+                                <td>${statsEnglish.poor}</td>
+                                <td>${statsKorean.poor}</td>
+                            </tr>
+                            <tr>
+                                <td><span class="rating-badge rating-unknown">?</span></td>
+                                <td>${statsEnglish.unknown}</td>
+                                <td>${statsKorean.unknown}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 `;
             } else {
                 wordStats.innerHTML = '';
@@ -1838,7 +1850,7 @@
 
         function downloadBackup() {
             const backup = {
-                version: '2.0.1',
+                version: '2.0.4',
                 exportDate: new Date().toISOString(),
                 words: words,
                 wordKnowledge: wordKnowledge,
