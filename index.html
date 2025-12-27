@@ -92,7 +92,7 @@
 
         .app-title h1 {
             font-family: 'HiMelody', sans-serif;
-            font-size: clamp(28px, 6vw, 40px);
+            font-size: clamp(42px, 9vw, 60px);
             font-weight: 400;
             color: #1a1a1a;
             letter-spacing: 0;
@@ -214,7 +214,10 @@
             width: 100%;
             max-width: 600px;
             padding: 20px 24px;
-            padding-bottom: 40px;
+        }
+
+        .bottom-spacer {
+            height: 40px;
         }
 
         /* Content Styles */
@@ -346,6 +349,50 @@
             flex: 1;
             padding: 16px 24px;
             font-size: 18px;
+        }
+
+        /* Quiz mode selection */
+        .mode-selection {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 20px 0;
+        }
+
+        .mode-btn {
+            padding: 32px 24px;
+            font-size: 22px;
+            font-weight: 600;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .mode-btn-handsfree {
+            background: linear-gradient(180deg, #003478 0%, #002855 100%);
+        }
+
+        .mode-btn-manual {
+            background: linear-gradient(180deg, #34a853 0%, #2d9248 100%);
+        }
+
+        .mode-btn .mode-desc {
+            display: block;
+            font-size: 14px;
+            font-weight: 400;
+            opacity: 0.85;
+            margin-top: 8px;
+        }
+
+        .quiz-active-area {
+            display: none;
+        }
+
+        .quiz-active-area.visible {
+            display: block;
+        }
+
+        .mode-selection.hidden {
+            display: none;
         }
 
         /* Voice settings */
@@ -673,6 +720,29 @@
             background: #e9ecef;
             color: #6c757d;
         }
+
+        /* Word stats */
+        .word-stats {
+            margin-bottom: 16px;
+        }
+
+        .word-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .word-stat:last-child {
+            border-bottom: none;
+        }
+
+        .word-stat .count {
+            font-weight: 600;
+            font-size: 15px;
+            color: #333;
+        }
     </style>
 </head>
 
@@ -712,13 +782,28 @@
             </div>
             <div class="page-content">
                 <div class="page-content-inner">
-                    <div class="quiz-controls-top">
-                        <button id="startPauseBtn" onclick="toggleStartPause()">Start Quiz</button>
-                        <button id="stopBtn" onclick="stopQuiz()" class="btn-danger" disabled>Stop</button>
+                    <!-- Mode Selection -->
+                    <div id="modeSelection" class="mode-selection">
+                        <button class="mode-btn mode-btn-handsfree" onclick="startQuizMode('handsfree')">
+                            Hands Free
+                            <span class="mode-desc">Auto-advances through words</span>
+                        </button>
+                        <button class="mode-btn mode-btn-manual" onclick="startQuizMode('manual')">
+                            Manual
+                            <span class="mode-desc">Rate each word to continue</span>
+                        </button>
                     </div>
-                    <div class="section">
-                        <div id="currentWord"></div>
-                        <div id="progress"></div>
+
+                    <!-- Active Quiz Area -->
+                    <div id="quizActiveArea" class="quiz-active-area">
+                        <div class="quiz-controls-top">
+                            <button id="startPauseBtn" onclick="toggleStartPause()">Pause</button>
+                            <button id="stopBtn" onclick="stopQuiz()" class="btn-danger">Stop</button>
+                        </div>
+                        <div class="section">
+                            <div id="currentWord"></div>
+                            <div id="progress"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -745,7 +830,8 @@
                 <div class="page-content-inner">
                     <div class="section">
                         <h2>Upload CSV</h2>
-                        <p>Upload a CSV file with English words in column A and Korean definitions in column B.</p>
+                        <p>Upload a CSV file with terms to study. Put the English words in column A and their Korean
+                            definitions in column B.</p>
                         <input type="file" id="csvFile" accept=".csv">
                         <button onclick="handleUpload()" class="btn-upload">Upload</button>
                     </div>
@@ -755,10 +841,12 @@
                             <h2>Loaded Words (<span id="wordCount">0</span>)</h2>
                             <button onclick="clearWords()" class="btn-clear">Clear All</button>
                         </div>
+                        <div id="wordStats" class="word-stats"></div>
                         <div class="word-list-container">
                             <div id="wordList"></div>
                         </div>
                     </div>
+                    <div class="bottom-spacer"></div>
                 </div>
             </div>
         </div>
@@ -825,7 +913,7 @@
                         <h2>About</h2>
                         <div class="setting-item">
                             <span class="setting-label">Version</span>
-                            <span class="setting-value">1.2.2</span>
+                            <span class="setting-value">1.3.5</span>
                         </div>
                         <div class="setting-item">
                             <span class="setting-label">Words Loaded</span>
@@ -835,9 +923,11 @@
 
                     <div class="section">
                         <h2>Reset</h2>
-                        <p>Clear all words, ratings, and settings to start fresh.</p>
-                        <button onclick="clearAllData()" class="btn-danger" style="width: 100%; margin-top: 12px;">Clear All Data</button>
+                        <p>Clear all words, ratings, and settings.</p>
+                        <button onclick="clearAllData()" class="btn-danger" style="width: 100%; margin-top: 12px;">Clear
+                            All Data</button>
                     </div>
+                    <div class="bottom-spacer"></div>
                 </div>
             </div>
         </div>
@@ -856,15 +946,17 @@
         let isPaused = false;
         let firstWord = 'english';
         let currentPage = 'home';
+        let quizMode = null; // 'handsfree' or 'manual'
+        let manualAdvance = false; // Flag for manual mode to advance to next word
 
         // Spaced repetition tracking
-        let wordKnowledge = {}; // { "english|korean": "good"|"neutral"|"poor"|"unknown" }
+        let wordKnowledge = {}; // { "id": "good"|"neutral"|"poor"|"unknown" }
         let shownWords = new Set(); // Track words shown in current/continued session
         let currentQuizWord = null; // Currently displayed word for response buttons
 
         // Word list sorting
-        let sortColumn = null; // 'english', 'korean', 'rating'
-        let sortDirection = 'asc'; // 'asc' or 'desc'
+        let sortColumn = 'rating'; // 'english', 'korean', 'rating'
+        let sortDirection = 'desc'; // 'asc' or 'desc'
 
 
         // Navigation
@@ -947,13 +1039,13 @@
         // Load words from localStorage on page load
         document.addEventListener('DOMContentLoaded', () => {
             loadFromStorage();
+            loadWordKnowledge();
+            loadShownWords();
             displayWords();
             loadVoicePreferences();
             loadSpeedSetting();
             loadPauseDuration();
             loadFirstWord();
-            loadWordKnowledge();
-            loadShownWords();
             populateVoiceSelectors();
             handleInitialRoute();
         });
@@ -1137,6 +1229,12 @@
                 // Brief animation feedback
                 btn.style.transform = 'scale(0.95)';
                 setTimeout(() => btn.style.transform = '', 150);
+
+                // In manual mode, advance to next word immediately
+                if (quizMode === 'manual') {
+                    window.speechSynthesis.cancel();
+                    manualAdvance = true;
+                }
             }
         }
 
@@ -1144,6 +1242,23 @@
             document.querySelectorAll('.response-buttons button').forEach(btn => {
                 btn.classList.remove('selected', 'unselected');
             });
+        }
+
+        function startQuizMode(mode) {
+            if (words.length === 0) {
+                alert('No words loaded. Please upload a CSV first.');
+                return;
+            }
+
+            quizMode = mode;
+            manualAdvance = false;
+
+            // Hide mode selection, show quiz area
+            document.getElementById('modeSelection').classList.add('hidden');
+            document.getElementById('quizActiveArea').classList.add('visible');
+
+            // Start the quiz
+            startQuiz();
         }
 
         function toggleStartPause() {
@@ -1428,8 +1543,28 @@
         function displayWords() {
             const wordList = document.getElementById('wordList');
             const wordCount = document.getElementById('wordCount');
+            const wordStats = document.getElementById('wordStats');
 
             wordCount.textContent = words.length;
+
+            // Calculate stats
+            let stats = { good: 0, neutral: 0, poor: 0, unknown: 0 };
+            words.forEach(word => {
+                const level = getWordKnowledgeLevel(word);
+                stats[level]++;
+            });
+
+            // Display stats
+            if (words.length > 0) {
+                wordStats.innerHTML = `
+                    <div class="word-stat"><span class="rating-badge rating-good">Good</span><span class="count">${stats.good}</span></div>
+                    <div class="word-stat"><span class="rating-badge rating-neutral">Maybe</span><span class="count">${stats.neutral}</span></div>
+                    <div class="word-stat"><span class="rating-badge rating-poor">Poor</span><span class="count">${stats.poor}</span></div>
+                    <div class="word-stat"><span class="rating-badge rating-unknown">Unknown</span><span class="count">${stats.unknown}</span></div>
+                `;
+            } else {
+                wordStats.innerHTML = '';
+            }
 
             if (words.length === 0) {
                 wordList.innerHTML = '<p class="no-words">No words loaded. Upload a CSV to get started.</p>';
@@ -1570,6 +1705,7 @@
 
             isQuizRunning = true;
             stopRequested = false;
+            manualAdvance = false;
 
             document.getElementById('startPauseBtn').textContent = 'Pause';
             document.getElementById('startPauseBtn').classList.add('btn-secondary');
@@ -1577,6 +1713,11 @@
             document.getElementById('responseSection').classList.add('visible');
             enableResponseButtons(true);
             isPaused = false;
+
+            // Hide pause button in manual mode
+            if (quizMode === 'manual') {
+                document.getElementById('startPauseBtn').style.display = 'none';
+            }
 
             const currentWordEl = document.getElementById('currentWord');
             const progress = document.getElementById('progress');
@@ -1588,6 +1729,7 @@
 
                 const word = orderedWords[i];
                 currentQuizWord = word;
+                manualAdvance = false;
 
                 // Clear previous response selection
                 clearResponseSelection();
@@ -1604,11 +1746,11 @@
                 currentWordEl.innerHTML = `<div class="${first.class}">${escapeHtml(first.text)}</div>`;
                 await speak(first.text, first.lang);
 
-                if (stopRequested) break;
+                if (stopRequested || manualAdvance) continue;
 
                 await pauseDelay(pauseDuration * 1000);
 
-                if (stopRequested) break;
+                if (stopRequested || manualAdvance) continue;
 
                 currentWordEl.innerHTML = `
                     <div class="${first.class}">${escapeHtml(first.text)}</div>
@@ -1616,24 +1758,41 @@
                 `;
                 await speak(second.text, second.lang);
 
-                if (stopRequested) break;
+                if (stopRequested || manualAdvance) continue;
 
                 await pauseDelay(pauseDuration * 1000);
 
-                if (stopRequested) break;
+                if (stopRequested || manualAdvance) continue;
 
                 // Repeat the Korean word (first word if Korean first, second word if English first)
                 const repeatWord = firstWord === 'korean' ? first : second;
                 await speak(repeatWord.text, repeatWord.lang);
 
-                if (stopRequested) break;
+                if (stopRequested || manualAdvance) continue;
 
-                if (i < orderedWords.length - 1) {
-                    await pauseDelay(pauseDuration * 1000);
+                // In manual mode, wait for user to rate the word
+                if (quizMode === 'manual') {
+                    await waitForManualAdvance();
+                } else {
+                    // Hands-free mode: auto-advance after pause
+                    if (i < orderedWords.length - 1) {
+                        await pauseDelay(pauseDuration * 1000);
+                    }
                 }
             }
 
             endQuiz();
+        }
+
+        function waitForManualAdvance() {
+            return new Promise(resolve => {
+                const checkInterval = setInterval(() => {
+                    if (stopRequested || manualAdvance) {
+                        clearInterval(checkInterval);
+                        resolve();
+                    }
+                }, 100);
+            });
         }
 
         function stopQuiz() {
@@ -1647,15 +1806,23 @@
             stopRequested = false;
             isPaused = false;
             currentQuizWord = null;
+            quizMode = null;
+            manualAdvance = false;
 
-            document.getElementById('startPauseBtn').textContent = 'Start Quiz';
+            // Reset UI
+            document.getElementById('startPauseBtn').textContent = 'Pause';
             document.getElementById('startPauseBtn').classList.remove('btn-secondary');
+            document.getElementById('startPauseBtn').style.display = '';
             document.getElementById('stopBtn').disabled = true;
             document.getElementById('responseSection').classList.remove('visible');
             enableResponseButtons(false);
 
             document.getElementById('currentWord').innerHTML = '';
             document.getElementById('progress').textContent = '';
+
+            // Show mode selection, hide quiz area
+            document.getElementById('modeSelection').classList.remove('hidden');
+            document.getElementById('quizActiveArea').classList.remove('visible');
         }
 
         function speak(text, lang) {
