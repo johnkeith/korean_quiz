@@ -164,22 +164,6 @@
             padding-top: calc(24px + env(safe-area-inset-top));
             padding-left: max(24px, env(safe-area-inset-left));
             padding-right: max(24px, env(safe-area-inset-right));
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .back-link {
-            color: rgba(255, 255, 255, 0.9);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .back-link:active {
-            opacity: 0.7;
         }
 
         .page-header h1 {
@@ -291,6 +275,10 @@
 
         .btn-secondary {
             background: linear-gradient(180deg, #003478 0%, #002855 100%);
+        }
+
+        .btn-dark {
+            background: linear-gradient(180deg, #1a1a1a 0%, #333333 100%);
         }
 
         .btn-upload {
@@ -777,7 +765,6 @@
             <div class="page-header">
                 <div class="page-header-content">
                     <h1>Quiz</h1>
-                    <span class="back-link" onclick="stopQuiz(); showHomePage()">Home</span>
                 </div>
             </div>
             <div class="page-content">
@@ -823,7 +810,6 @@
             <div class="page-header">
                 <div class="page-header-content">
                     <h1>Words</h1>
-                    <span class="back-link" onclick="showHomePage()">Home</span>
                 </div>
             </div>
             <div class="page-content">
@@ -856,7 +842,6 @@
             <div class="page-header">
                 <div class="page-header-content">
                     <h1>Settings</h1>
-                    <span class="back-link" onclick="showHomePage()">Home</span>
                 </div>
             </div>
             <div class="page-content">
@@ -910,10 +895,20 @@
                     </div>
 
                     <div class="section">
+                        <h2>Backup & Restore</h2>
+                        <p>Download a backup of all your words, ratings, and progress.</p>
+                        <button onclick="downloadBackup()" class="btn-secondary" style="width: 100%; margin-top: 12px;">Download Backup</button>
+
+                        <p style="margin-top: 20px;">Restore from a previous backup file.</p>
+                        <input type="file" id="restoreFile" accept=".json" style="margin-top: 8px;">
+                        <button onclick="restoreBackup()" class="btn-dark" style="width: 100%; margin-top: 12px;">Restore from Backup</button>
+                    </div>
+
+                    <div class="section">
                         <h2>About</h2>
                         <div class="setting-item">
                             <span class="setting-label">Version</span>
-                            <span class="setting-value">1.3.5</span>
+                            <span class="setting-value">1.3.8</span>
                         </div>
                         <div class="setting-item">
                             <span class="setting-label">Words Loaded</span>
@@ -1645,6 +1640,110 @@
 
                 alert('All data has been cleared.');
             }
+        }
+
+        function downloadBackup() {
+            const backup = {
+                version: '1.3.8',
+                exportDate: new Date().toISOString(),
+                words: words,
+                wordKnowledge: wordKnowledge,
+                shownWords: [...shownWords],
+                settings: {
+                    voicePreferences: selectedVoices,
+                    koreanSpeed: koreanSpeed,
+                    pauseDuration: pauseDuration,
+                    firstWord: firstWord
+                }
+            };
+
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `korean-quiz-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function restoreBackup() {
+            const fileInput = document.getElementById('restoreFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a backup file first.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const backup = JSON.parse(e.target.result);
+
+                    // Validate backup structure
+                    if (!backup.words || !Array.isArray(backup.words)) {
+                        throw new Error('Invalid backup file: missing words data');
+                    }
+
+                    if (!confirm(`This will replace all current data with the backup from ${backup.exportDate ? new Date(backup.exportDate).toLocaleDateString() : 'unknown date'}. Continue?`)) {
+                        return;
+                    }
+
+                    // Restore words
+                    words = backup.words;
+                    saveToStorage();
+
+                    // Restore word knowledge
+                    if (backup.wordKnowledge) {
+                        wordKnowledge = backup.wordKnowledge;
+                        saveWordKnowledge();
+                    }
+
+                    // Restore shown words
+                    if (backup.shownWords) {
+                        shownWords = new Set(backup.shownWords);
+                        saveShownWords();
+                    }
+
+                    // Restore settings
+                    if (backup.settings) {
+                        if (backup.settings.voicePreferences) {
+                            selectedVoices = backup.settings.voicePreferences;
+                            saveVoicePreferences();
+                        }
+                        if (backup.settings.koreanSpeed !== undefined) {
+                            koreanSpeed = backup.settings.koreanSpeed;
+                            localStorage.setItem('koreanSpeed', koreanSpeed.toString());
+                            document.getElementById('koreanSpeed').value = koreanSpeed * 100;
+                            document.getElementById('speedValue').textContent = Math.round(koreanSpeed * 100) + '%';
+                        }
+                        if (backup.settings.pauseDuration !== undefined) {
+                            pauseDuration = backup.settings.pauseDuration;
+                            localStorage.setItem('pauseDuration', pauseDuration.toString());
+                            document.getElementById('pauseDuration').value = pauseDuration;
+                            document.getElementById('pauseValue').textContent = pauseDuration + 's';
+                        }
+                        if (backup.settings.firstWord) {
+                            firstWord = backup.settings.firstWord;
+                            localStorage.setItem('firstWord', firstWord);
+                            document.querySelector(`input[name="firstWord"][value="${firstWord}"]`).checked = true;
+                        }
+                    }
+
+                    // Update UI
+                    displayWords();
+                    document.getElementById('settingsWordCount').textContent = words.length;
+                    populateVoiceSelectors();
+                    fileInput.value = '';
+
+                    alert(`Backup restored successfully! ${words.length} words loaded.`);
+                } catch (error) {
+                    alert('Error restoring backup: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
         }
 
         function removeWord(index) {
