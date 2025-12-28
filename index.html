@@ -947,10 +947,7 @@
                     </div>
 
                     <div class="section">
-                        <div class="section-header">
-                            <h2>Loaded Words (<span id="wordCount">0</span>)</h2>
-                            <button onclick="clearWords()" class="btn-clear">Clear All</button>
-                        </div>
+                        <h2>Loaded Words (<span id="wordCount">0</span>)</h2>
                         <div id="wordStats" class="word-stats"></div>
                         <div class="word-list-container">
                             <div id="wordList"></div>
@@ -1020,7 +1017,7 @@
                         <h2>About</h2>
                         <div class="setting-item">
                             <span class="setting-label">Version</span>
-                            <span class="setting-value">2.0.4</span>
+                            <span class="setting-value">2.0.8</span>
                         </div>
                         <div class="setting-item">
                             <span class="setting-label">Words Loaded</span>
@@ -1582,14 +1579,14 @@
         function parseCSV(text) {
             const lines = text.split(/\r?\n/);
 
-            // Build a map of existing words by Korean definition
-            const existingByKorean = new Map();
+            // Build a set of existing word pairs (english + korean) for exact duplicate checking
+            const existingPairs = new Set();
             words.forEach(word => {
-                existingByKorean.set(word.korean, word);
+                existingPairs.add(word.english + '|||' + word.korean);
             });
 
             let newCount = 0;
-            let updatedCount = 0;
+            let skippedCount = 0;
 
             for (const line of lines) {
                 if (!line.trim()) continue;
@@ -1601,13 +1598,12 @@
                     const korean = parts[1].trim();
 
                     if (english && korean) {
-                        if (existingByKorean.has(korean)) {
-                            // Update existing word's English if different
-                            const existing = existingByKorean.get(korean);
-                            if (existing.english !== english) {
-                                existing.english = english;
-                                updatedCount++;
-                            }
+                        const pairKey = english + '|||' + korean;
+
+                        if (existingPairs.has(pairKey)) {
+                            // Exact duplicate - skip
+                            console.log('Skipped duplicate:', { english, korean });
+                            skippedCount++;
                         } else {
                             // Add new word with unique ID
                             const newWord = {
@@ -1615,27 +1611,23 @@
                                 english,
                                 korean
                             };
-                            existingByKorean.set(korean, newWord);
+                            words.push(newWord);
+                            existingPairs.add(pairKey);
                             newCount++;
+                            console.log('Added word:', { english, korean });
                         }
                     }
                 }
             }
 
-            // Convert map back to array
-            words = Array.from(existingByKorean.values());
-
             saveToStorage();
             displayWords();
             document.getElementById('csvFile').value = '';
 
-            if (newCount > 0 || updatedCount > 0) {
-                let message = [];
-                if (newCount > 0) message.push(`${newCount} new word(s) added`);
-                if (updatedCount > 0) message.push(`${updatedCount} word(s) updated`);
-                alert(message.join(', ') + `. Total: ${words.length} words.`);
-            } else if (words.length > 0) {
-                alert(`No new words to add. Total: ${words.length} words.`);
+            if (newCount > 0) {
+                alert(`${newCount} new word(s) added. Skipped ${skippedCount} duplicate(s). Total: ${words.length} words.`);
+            } else if (skippedCount > 0) {
+                alert(`No new words to add. Skipped ${skippedCount} duplicate(s). Total: ${words.length} words.`);
             } else {
                 alert('No valid word pairs found in the CSV.');
             }
@@ -1850,7 +1842,7 @@
 
         function downloadBackup() {
             const backup = {
-                version: '2.0.4',
+                version: '2.0.8',
                 exportDate: new Date().toISOString(),
                 words: words,
                 wordKnowledge: wordKnowledge,
